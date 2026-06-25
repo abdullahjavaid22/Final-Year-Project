@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Feedbacks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #4f6ef7; --accent2: #7c3aed;
+    --success: #10b981; --warning: #f59e0b;
+    --danger: #ef4444; --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6; --muted: rgba(232,234,246,0.45);
+    --ink: #0a0f1e; --sidebar-w: 240px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ink); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: rgba(255,255,255,0.025); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; position: fixed; inset: 0 auto 0 0; z-index: 100; backdrop-filter: blur(18px); }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 22px 24px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(79,110,247,0.35); }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+  .nav-wrap { flex: 1; padding: 18px 12px 0; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-size: 13.5px; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.2s; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: rgba(79,110,247,0.2); border-color: rgba(79,110,247,0.2); color: var(--text); }
+  .nav-badge { margin-left: auto; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .sidebar-bottom { padding: 16px 12px 0; margin-top: auto; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; color: white; display: flex; align-items: center; justify-content: center; }
+  .u-name { font-size: 13px; font-weight: 600; }
+  .u-role { font-size: 11px; color: var(--muted); }
+
+  /* Main */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { padding: 20px 36px; border-bottom: 1px solid var(--border); background: rgba(10,15,30,0.65); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 40; }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar p { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+  .content { padding: 28px 36px 40px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  /* Stat cards */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+  .stat { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 20px; animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) both; position: relative; overflow: hidden; }
+  .stat::before { content:''; position:absolute; left:0; right:0; top:0; height:2px; border-radius:16px 16px 0 0; }
+  .stat.t::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .stat.p::before { background: var(--success); }
+  .stat.n::before { background: var(--danger); }
+  .stat.avg::before { background: var(--warning); }
+  .stat:nth-child(1){animation-delay:.05s} .stat:nth-child(2){animation-delay:.1s} .stat:nth-child(3){animation-delay:.15s} .stat:nth-child(4){animation-delay:.2s}
+  .sl { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .sn { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+  .stat.t .sn { color: var(--accent); }
+  .stat.p .sn { color: var(--success); }
+  .stat.n .sn { color: var(--danger); }
+  .stat.avg .sn { color: var(--warning); }
+
+  /* Filters */
+  .filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search-inp { width: 100%; padding: 10px 12px 10px 38px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px; outline: none; transition: all 0.2s; }
+  .search-inp:focus { border-color: rgba(79,110,247,0.45); background: rgba(79,110,247,0.06); box-shadow: 0 0 0 3px rgba(79,110,247,0.12); }
+
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tab { padding: 8px 14px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .tab:hover { background: var(--surface); color: var(--text); }
+  .tab.active { background: rgba(79,110,247,0.14); border-color: rgba(79,110,247,0.26); color: var(--text); }
+
+  /* Table */
+  .table-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both; animation-delay: 0.2s; }
+  .sc { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 980px; }
+  thead tr { border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  td { padding: 13px 16px; vertical-align: middle; font-size: 13.5px; }
+
+  /* Pills */
+  .pill { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; white-space: nowrap; }
+  .pill-student { background: rgba(79,110,247,0.12); color: var(--accent); border: 1px solid rgba(79,110,247,0.22); }
+  .pill-faculty { background: rgba(124,58,237,0.12); color: var(--accent2); border: 1px solid rgba(124,58,237,0.22); }
+  .pill-hod     { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.22); }
+
+  /* Rating stars */
+  .stars { display: inline-flex; gap: 2px; }
+  .star { font-size: 13px; }
+  .star.on  { color: #f59e0b; }
+  .star.off { color: rgba(255,255,255,0.15); }
+
+  /* Rating badge */
+  .r-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .r-high   { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.22); }
+  .r-mid    { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.22); }
+  .r-low    { background: rgba(239,68,68,0.12);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.22); }
+
+  .id-cell { font-family: ui-monospace, monospace; color: var(--muted); font-size: 11px; }
+  .msg-cell { max-width: 260px; color: var(--muted); line-height: 1.45; font-size: 13px; }
+
+  /* Skeleton */
+  .skel { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; display: inline-block; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state svg { width: 44px; height: 44px; margin-bottom: 12px; opacity: 0.3; }
+
+  /* Sentiment badges */
+  .sent-pos { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.25); font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; white-space: nowrap; }
+  .sent-neg { background: rgba(239,68,68,0.12);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.25);  font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; white-space: nowrap; }
+  .sent-pending { background: rgba(148,163,184,0.08); color: var(--muted); border: 1px solid var(--border); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; display: inline-block; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <a class="nav-item" href="admin-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="admin-complaints.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Complaints
+    </a>
+    <a class="nav-item active" href="admin-feedbacks.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedbacks
+    </a>
+    <a class="nav-item" href="admin-departments.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+      Departments
+    </a>
+    <a class="nav-item" href="admin-register.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Register Users
+    </a>
+    <a class="nav-item" href="admin-notifications.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar" id="adminAvatar">AD</div>
+      <div>
+        <div class="u-name" id="adminName">Admin User</div>
+        <div class="u-role">System Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <h1>Feedbacks</h1>
+    <p id="topbarSub">Loading feedback from Supabase…</p>
+  </header>
+
+  <main class="content">
+    <!-- Stat cards -->
+    <div class="stats">
+      <div class="stat t">
+        <div class="sl">Total Feedbacks</div>
+        <div class="sn" id="cntTotal"><span class="skel" style="width:40px;height:28px;"></span></div>
+      </div>
+      <div class="stat p">
+        <div class="sl">Positive</div>
+        <div class="sn" id="cntPositive"><span class="skel" style="width:40px;height:28px;"></span></div>
+      </div>
+      <div class="stat n">
+        <div class="sl">Negative</div>
+        <div class="sn" id="cntNegative"><span class="skel" style="width:40px;height:28px;"></span></div>
+      </div>
+      <div class="stat avg">
+        <div class="sl">Avg Rating</div>
+        <div class="sn" id="cntAvg"><span class="skel" style="width:40px;height:28px;"></span></div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="searchQ" type="search" placeholder="Search by title, email, department, feedback…" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-f="all">All</button>
+      <button class="tab" data-f="Student">Students</button>
+      <button class="tab" data-f="Faculty">Faculty</button>
+      <button class="tab" data-f="positive">✅ Positive</button>
+      <button class="tab" data-f="negative">❌ Negative</button>
+      <button class="tab" data-f="high">High Rated ⭐⭐⭐⭐⭐</button>
+      <button class="tab" data-f="low">Low Rated ⭐</button>
+    </div>
+
+    <div class="table-card">
+      <div class="sc">
+        <table>
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Email</th>
+              <th>Complaint Title</th>
+              <th>Department</th>
+              <th>Complaint ID</th>
+              <th>Feedback</th>
+              <th>Rating</th>
+              <th>Sentiment</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody">
+            <tr><td colspan="9" style="padding:20px 16px;"><span class="skel" style="width:100%;height:14px;"></span></td></tr>
+            <tr><td colspan="9" style="padding:20px 16px;"><span class="skel" style="width:80%;height:14px;"></span></td></tr>
+            <tr><td colspan="9" style="padding:20px 16px;"><span class="skel" style="width:90%;height:14px;"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+  const SUPABASE_URL      = 'https://nxufdvaffsygzutcztzr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Admin info
+  const adminEmail = localStorage.getItem('adminEmail') || 'admin@digisolutions.com';
+  document.getElementById('adminAvatar').textContent = adminEmail.substring(0,2).toUpperCase();
+  document.getElementById('adminName').textContent   = adminEmail.split('@')[0];
+
+  let allFeedbacks = [];
+  let activeFilter = 'all';
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '—';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return 'Just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 7)  return d + 'd ago';
+    return new Date(dateStr).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  function rolePill(role) {
+    const r = (role || '').trim().toLowerCase();
+    if (r === 'student') return `<span class="pill pill-student">Student</span>`;
+    return `<span class="pill pill-faculty">Faculty</span>`;
+  }
+
+  function sentimentBadge(sentiment) {
+    const s = (sentiment || '').toLowerCase().trim();
+    if (s === 'positive') return `<span class="sent-pos">✅ Positive</span>`;
+    if (s === 'negative') return `<span class="sent-neg">❌ Negative</span>`;
+    return `<span class="sent-pending">⏳ Pending AI</span>`;
+  }
+
+  function ratingBadge(rating) {
+    const n = parseInt(rating) || 0;
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      stars += `<span class="star ${i <= n ? 'on' : 'off'}">★</span>`;
+    }
+    let cls = 'r-mid';
+    if (n >= 4) cls = 'r-high';
+    else if (n <= 2) cls = 'r-low';
+    return `<div class="r-badge ${cls}"><div class="stars">${stars}</div> ${n}/5</div>`;
+  }
+
+  function shortId(id) {
+    if (!id) return '—';
+    return String(id).substring(0, 8) + '…';
+  }
+
+  async function loadFeedbacks() {
+    // ✅ FIX 1: sentiment column is now included in select
+    const { data, error } = await sb
+      .from('complaint_feedbacks')
+      .select('id, email, role, complaint_id, complaint_title, feedback, rating, created_at, department, sentiment')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      document.getElementById('tblBody').innerHTML =
+        `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--danger);">
+          Failed to load: ${esc(error.message)}
+        </td></tr>`;
+      return;
+    }
+
+    // ✅ FIX 2: use data directly, do NOT overwrite sentiment with null
+    allFeedbacks = data || [];
+
+    // Stats — now correctly counts real sentiment values
+    const total    = allFeedbacks.length;
+    const positive = allFeedbacks.filter(f => (f.sentiment || '').toLowerCase() === 'positive').length;
+    const negative = allFeedbacks.filter(f => (f.sentiment || '').toLowerCase() === 'negative').length;
+    const avgRaw   = total ? allFeedbacks.reduce((s, f) => s + (parseInt(f.rating)||0), 0) / total : 0;
+    const avg      = avgRaw.toFixed(1);
+
+    document.getElementById('cntTotal').textContent    = total;
+    document.getElementById('cntPositive').textContent = positive;
+    document.getElementById('cntNegative').textContent = negative;
+    document.getElementById('cntAvg').textContent      = avg + ' ★';
+    document.getElementById('topbarSub').textContent =
+      total + ' feedback' + (total !== 1 ? 's' : '') + ' received from students, faculty & HODs';
+
+    renderTable();
+  }
+
+  function getFiltered() {
+    const q = (document.getElementById('searchQ').value || '').toLowerCase().trim();
+    return allFeedbacks.filter(f => {
+      let matchRole = true;
+      if      (activeFilter === 'Student')  matchRole = (f.role || '').trim().toLowerCase() === 'student';
+      else if (activeFilter === 'Faculty')  matchRole = (f.role || '').trim().toLowerCase() !== 'student';
+      else if (activeFilter === 'positive') matchRole = (f.sentiment || '').toLowerCase() === 'positive';
+      else if (activeFilter === 'negative') matchRole = (f.sentiment || '').toLowerCase() === 'negative';
+      else if (activeFilter === 'high')     matchRole = parseInt(f.rating) >= 4;
+      else if (activeFilter === 'low')      matchRole = parseInt(f.rating) <= 2;
+
+      const matchQ = !q ||
+        (f.complaint_title || '').toLowerCase().includes(q) ||
+        (f.email || '').toLowerCase().includes(q) ||
+        (f.department || '').toLowerCase().includes(q) ||
+        (f.feedback || '').toLowerCase().includes(q) ||
+        (f.role || '').toLowerCase().includes(q);
+
+      return matchRole && matchQ;
+    });
+  }
+
+  function renderTable() {
+    const rows = getFiltered();
+    const tbody = document.getElementById('tblBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="9">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p>No feedbacks found</p>
+        </div>
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(f => `
+      <tr>
+        <td>${rolePill(f.role)}</td>
+        <td style="color:var(--muted);font-size:13px;">${esc(f.email || '—')}</td>
+        <td style="font-weight:600;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${esc(f.complaint_title)}">${esc(f.complaint_title || '—')}</td>
+        <td style="font-size:13px;">${esc(f.department || '—')}</td>
+        <td class="id-cell" title="${esc(f.complaint_id)}">${shortId(f.complaint_id)}</td>
+        <td class="msg-cell">${esc(f.feedback || '—')}</td>
+        <td>${ratingBadge(f.rating)}</td>
+        <td>${sentimentBadge(f.sentiment)}</td>
+        <td style="color:var(--muted);font-size:12.5px;white-space:nowrap;">${timeAgo(f.created_at)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Tab filters
+  document.getElementById('tabs').querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.getAttribute('data-f');
+      renderTable();
+    });
+  });
+
+  document.getElementById('searchQ').addEventListener('input', renderTable);
+
+  loadFeedbacks();
+})();
+</script>
+</body>
+</html>

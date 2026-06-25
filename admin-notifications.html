@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Notifications</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6;
+    --muted: rgba(232,234,246,0.45);
+    --ink: #0a0f1e;
+    --sidebar-w: 240px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0f1e;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: rgba(255,255,255,0.025);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 100;
+    backdrop-filter: blur(18px);
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 22px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(79,110,247,0.35);
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+  .nav-wrap { flex: 1; padding: 18px 12px 0; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    text-decoration: none; color: var(--muted);
+    font-size: 13.5px; margin-bottom: 4px;
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active {
+    background: rgba(79,110,247,0.2);
+    border-color: rgba(79,110,247,0.2);
+    color: var(--text);
+  }
+  .nav-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .sidebar-bottom { padding: 16px 12px 0; margin-top: auto; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800;
+    color: white; display: flex; align-items: center; justify-content: center;
+  }
+  .u-name { font-size: 13px; font-weight: 600; }
+  .u-role { font-size: 11px; color: var(--muted); }
+
+  /* ── Main ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    padding: 20px 36px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,15,30,0.65);
+    backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 40;
+  }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar p { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+
+  .content { padding: 28px 36px 44px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both;
+  }
+  .card:nth-child(2) { animation-delay: 0.06s; }
+
+  .card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    margin-bottom: 16px;
+    letter-spacing: -0.15px;
+  }
+
+  label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.55px;
+    margin-bottom: 8px;
+  }
+  .f { margin-bottom: 13px; position: relative; }
+
+  input, textarea {
+    width: 100%;
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  textarea { min-height: 110px; line-height: 1.55; resize: vertical; }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.22); }
+  input:focus, textarea:focus {
+    border-color: rgba(79,110,247,0.45);
+    background: rgba(79,110,247,0.06);
+    box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  }
+
+  /* ── Email field states ── */
+  input.valid {
+    border-color: rgba(16,185,129,0.55) !important;
+    background: rgba(16,185,129,0.06) !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.12) !important;
+  }
+  input.invalid {
+    border-color: rgba(239,68,68,0.55) !important;
+    background: rgba(239,68,68,0.06) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important;
+  }
+  input.searching {
+    border-color: rgba(245,158,11,0.45) !important;
+    background: rgba(245,158,11,0.04) !important;
+  }
+
+  /* ── Email status badge ── */
+  .email-status {
+    display: none;
+    margin-top: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    align-items: center;
+    gap: 7px;
+  }
+  .email-status.show { display: flex; }
+  .email-status.ok {
+    background: rgba(16,185,129,0.12);
+    color: #10b981;
+    border: 1px solid rgba(16,185,129,0.25);
+  }
+  .email-status.err {
+    background: rgba(239,68,68,0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.25);
+  }
+  .email-status.searching {
+    background: rgba(245,158,11,0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .email-status svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* ── Autocomplete dropdown ── */
+  .autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #131929;
+    border: 1px solid rgba(79,110,247,0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 200;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    display: none;
+  }
+  .autocomplete-list.open { display: block; }
+  .ac-item {
+    padding: 11px 14px;
+    font-size: 13.5px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.focused {
+    background: rgba(79,110,247,0.12);
+    color: var(--text);
+  }
+  .ac-item svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+  .ac-match { color: var(--accent); font-weight: 700; }
+
+  /* ── Templates ── */
+  .tpl-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 13px; }
+  .tpl {
+    padding: 8px 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 750;
+    transition: all 0.2s;
+  }
+  .tpl:hover {
+    color: var(--text);
+    border-color: rgba(79,110,247,0.35);
+    background: rgba(79,110,247,0.08);
+  }
+
+  /* ── Send button ── */
+  .send {
+    width: 100%;
+    margin-top: 4px;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 10px 26px rgba(79,110,247,0.28);
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  }
+  .send:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(79,110,247,0.38); }
+  .send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: white;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: rgba(16,185,129,0.95); }
+  #toast.error   { background: rgba(239,68,68,0.95); }
+
+  /* ── Recent items ── */
+  .item {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 12px;
+    animation: fadeUp 0.45s cubic-bezier(.22,1,.36,1) both;
+  }
+  .item:last-child { margin-bottom: 0; }
+  .item:nth-child(1) { animation-delay: 0.05s; }
+  .item:nth-child(2) { animation-delay: 0.08s; }
+  .item:nth-child(3) { animation-delay: 0.11s; }
+  .item:nth-child(4) { animation-delay: 0.14s; }
+  .item:nth-child(5) { animation-delay: 0.17s; }
+
+  .em { font-size: 12.5px; color: var(--accent); font-weight: 800; word-break: break-all; margin-bottom: 8px; }
+  .pv {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ts { font-size: 11px; color: rgba(232,234,246,0.28); }
+
+  .b-read {
+    font-size: 10px; font-weight: 900;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(232,234,246,0.05); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .b-unread {
+    font-size: 10px; font-weight: 900;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(79,110,247,0.14); color: var(--accent);
+    border: 1px solid rgba(79,110,247,0.28);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+  @media (max-width: 1040px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" aria-label="Admin navigation">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <a class="nav-item" href="admin-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="admin-complaints.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Complaints
+      <span class="nav-badge">42</span>
+    </a>
+    <a class="nav-item" href="admin-feedbacks.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedbacks
+    </a>
+    <a class="nav-item" href="admin-departments.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+      Departments
+    </a>
+    <a class="nav-item" href="admin-register.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Register Users
+    </a>
+    <a class="nav-item active" href="admin-notifications.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="admin-login.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">AD</div>
+      <div>
+        <div class="u-name">Admin User</div>
+        <div class="u-role">System Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <h1>Notifications</h1>
+    <p>Send alerts to students and faculty</p>
+  </header>
+
+  <main class="content">
+    <div class="grid">
+      <!-- Send Notification -->
+      <section class="card">
+        <h2>Send Notification</h2>
+        <form id="nfForm" onsubmit="event.preventDefault(); handleSend();">
+
+          <!-- Recipient Email with autocomplete & validation -->
+          <div class="f" id="emailField">
+            <label>Recipient Email</label>
+            <input
+              id="nfTo"
+              type="email"
+              placeholder="Start typing to search users…"
+              autocomplete="off"
+              oninput="handleEmailInput(this.value)"
+              onblur="scheduleClose()"
+              onfocus="handleEmailInput(this.value)"
+              onkeydown="handleKeyDown(event)"
+            >
+            <div class="autocomplete-list" id="acList"></div>
+            <div class="email-status" id="emailStatus"></div>
+          </div>
+
+          <div class="f">
+            <label>Subject</label>
+            <input id="nfSubj" type="text" placeholder="Subject line">
+          </div>
+          <div class="f">
+            <label>Message</label>
+            <textarea id="nfMsg" rows="4" placeholder="Write your message…"></textarea>
+          </div>
+
+          <div class="tpl-row">
+            <button type="button" class="tpl" data-k="received">Complaint Received</button>
+            <button type="button" class="tpl" data-k="updated">Status Updated</button>
+            <button type="button" class="tpl" data-k="action">Action Required</button>
+          </div>
+
+          <button type="submit" class="send" id="sendBtn" disabled>Send Notification</button>
+        </form>
+      </section>
+
+      <!-- Recently Sent -->
+      <section class="card">
+        <h2>Recently Sent</h2>
+        <div id="recentList">
+          <div style="text-align:center; padding: 24px 0; color: var(--muted); font-size:13px;">
+            <svg style="width:18px;height:18px;display:inline-block;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg>
+            Loading…
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  SUPABASE CONFIG — replace with your real values
+// ═══════════════════════════════════════════════
+const SUPABASE_URL  = 'https://nxufdvaffsygzutcztzr.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';   // ← paste your anon key here
+const TABLE         = 'registered_users';           // table name confirmed
+
+// ═══════════════════════════════════════════════
+//  Templates
+// ═══════════════════════════════════════════════
+const TEMPLATES = {
+  received: 'Your complaint has been received and logged. You will receive further updates as the assigned department progresses the ticket.',
+  updated:  'The status of your complaint has changed. Sign in to the portal to review the latest notes and any next steps from the department.',
+  action:   'Action required: please review the latest complaint update within 48 hours so we can continue resolution without delaying your ticket.'
+};
+document.querySelectorAll('.tpl').forEach(b => {
+  b.addEventListener('click', () => {
+    const k = b.getAttribute('data-k');
+    if (TEMPLATES[k]) document.getElementById('nfMsg').value = TEMPLATES[k];
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════
+let emailValid    = false;
+let debounceTimer = null;
+let acIndex       = -1;
+let acItems       = [];
+let closeTimer    = null;
+
+const input      = document.getElementById('nfTo');
+const acList     = document.getElementById('acList');
+const statusEl   = document.getElementById('emailStatus');
+const sendBtn    = document.getElementById('sendBtn');
+
+// ═══════════════════════════════════════════════
+//  Supabase helpers
+// ═══════════════════════════════════════════════
+async function sbFetch(url) {
+  const res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error('Supabase error: ' + res.status);
+  return res.json();
+}
+
+// Fetch suggestions (partial match, limit 6)
+async function fetchSuggestions(query) {
+  const enc = encodeURIComponent(query);
+  const url = `${SUPABASE_URL}/rest/v1/${TABLE}?email=ilike.*${enc}*&select=email&limit=6`;
+  return sbFetch(url);
+}
+
+// Exact match check
+async function checkExact(email) {
+  const enc = encodeURIComponent(email);
+  const url = `${SUPABASE_URL}/rest/v1/${TABLE}?email=eq.${enc}&select=email&limit=1`;
+  const rows = await sbFetch(url);
+  return rows.length > 0;
+}
+
+// ═══════════════════════════════════════════════
+//  UI helpers
+// ═══════════════════════════════════════════════
+function showStatus(type, html) {
+  statusEl.className = 'email-status show ' + type;
+  statusEl.innerHTML = html;
+}
+function clearStatus() {
+  statusEl.className = 'email-status';
+  statusEl.innerHTML = '';
+}
+function setValid(v) {
+  emailValid = v;
+  sendBtn.disabled = !v;
+  input.className = v ? 'valid' : '';
+}
+
+function closeDropdown() {
+  acList.classList.remove('open');
+  acList.innerHTML = '';
+  acIndex = -1;
+  acItems = [];
+}
+
+function scheduleClose() {
+  closeTimer = setTimeout(() => closeDropdown(), 180);
+}
+
+function cancelClose() {
+  clearTimeout(closeTimer);
+}
+
+function renderDropdown(rows, query) {
+  if (!rows.length) { closeDropdown(); return; }
+  acItems = rows.map(r => r.email);
+  acIndex = -1;
+  acList.innerHTML = rows.map((r, i) => {
+    const email = r.email;
+    const highlighted = email.replace(
+      new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i'),
+      '<span class="ac-match">$1</span>'
+    );
+    return `<div class="ac-item" data-i="${i}" onmousedown="cancelClose(); selectAC(${i})">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      ${highlighted}
+    </div>`;
+  }).join('');
+  acList.classList.add('open');
+}
+
+function selectAC(i) {
+  const email = acItems[i];
+  input.value = email;
+  closeDropdown();
+  validateExact(email);
+}
+
+// ═══════════════════════════════════════════════
+//  Keyboard nav for dropdown
+// ═══════════════════════════════════════════════
+function handleKeyDown(e) {
+  if (!acList.classList.contains('open')) return;
+  const items = acList.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acIndex = Math.min(acIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === acIndex));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acIndex = Math.max(acIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === acIndex));
+  } else if (e.key === 'Enter' && acIndex >= 0) {
+    e.preventDefault();
+    selectAC(acIndex);
+  } else if (e.key === 'Escape') {
+    closeDropdown();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Main input handler (debounced)
+// ═══════════════════════════════════════════════
+function handleEmailInput(val) {
+  clearTimeout(debounceTimer);
+  setValid(false);
+  clearStatus();
+  input.className = '';
+
+  if (!val.trim()) { closeDropdown(); return; }
+
+  // Show searching state immediately
+  showStatus('searching',
+    `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg> Searching users…`
+  );
+
+  debounceTimer = setTimeout(async () => {
+    try {
+      // Suggestions while typing
+      const rows = await fetchSuggestions(val);
+      if (rows.length > 0) {
+        renderDropdown(rows, val);
+      } else {
+        closeDropdown();
+      }
+
+      // If input looks like a full email, do exact validation too
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        validateExact(val);
+      } else {
+        clearStatus();
+        input.className = '';
+      }
+    } catch (err) {
+      clearStatus();
+      closeDropdown();
+      console.error(err);
+    }
+  }, 320);
+}
+
+// ═══════════════════════════════════════════════
+//  Exact validation
+// ═══════════════════════════════════════════════
+async function validateExact(email) {
+  showStatus('searching',
+    `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg> Verifying…`
+  );
+  try {
+    const found = await checkExact(email);
+    if (found) {
+      setValid(true);
+      input.className = 'valid';
+      showStatus('ok',
+        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> User found — ready to send`
+      );
+    } else {
+      setValid(false);
+      input.className = 'invalid';
+      showStatus('err',
+        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Match not found — this email is not registered`
+      );
+    }
+  } catch (err) {
+    clearStatus();
+    input.className = '';
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Send handler
+// ═══════════════════════════════════════════════
+async function handleSend() {
+  if (!emailValid) return;
+
+  const to      = input.value.trim();
+  const subject = document.getElementById('nfSubj').value.trim();
+  const msg     = document.getElementById('nfMsg').value.trim();
+
+  if (!subject || !msg) {
+    showToast('Please fill in subject and message.', 'error');
+    return;
+  }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending…';
+
+  try {
+    // ─── Insert into admin_notifications table ───
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/admin_notifications`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        recipient_email: to,
+        subject:         subject,
+        message:         msg,
+        sent_at:         new Date().toISOString(),
+        is_read:         false
+      })
+    });
+
+    if (!res.ok) throw new Error('Insert failed: ' + res.status);
+
+    showToast('Notification sent to ' + to, 'success');
+    fetchRecentNotifications();
+
+    // Reset form
+    document.getElementById('nfForm').reset();
+    clearStatus();
+    closeDropdown();
+    setValid(false);
+    input.className = '';
+
+  } catch (err) {
+    showToast('Failed to send. Check console.', 'error');
+    console.error(err);
+    sendBtn.disabled = false;
+  }
+
+  sendBtn.textContent = 'Send Notification';
+  sendBtn.disabled = !emailValid;
+}
+
+// ═══════════════════════════════════════════════
+//  Toast
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  const icon = type === 'success'
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+  t.innerHTML  = icon + msg;
+  t.className  = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ═══════════════════════════════════════════════
+//  Fetch & render Recently Sent from Supabase
+// ═══════════════════════════════════════════════
+async function fetchRecentNotifications() {
+  const list = document.getElementById('recentList');
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/admin_notifications?select=*&order=sent_at.desc&limit=10`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': 'Bearer ' + SUPABASE_ANON
+      }
+    });
+    if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+    const rows = await res.json();
+
+    if (!rows.length) {
+      list.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px;">No notifications sent yet.</div>`;
+      return;
+    }
+
+    list.innerHTML = rows.map((n, i) => {
+      const date = new Date(n.sent_at);
+      const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        + ' · ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      const badge = n.is_read
+        ? `<span class="b-read">Read</span>`
+        : `<span class="b-unread">Unread</span>`;
+      return `
+        <div class="item" style="animation-delay:${i * 0.05}s">
+          <div class="em">${n.recipient_email}</div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;">${n.subject}</div>
+          <div class="pv">${n.message}</div>
+          <div class="meta">
+            <span class="ts">${formatted}</span>
+            ${badge}
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    list.innerHTML = `<div style="text-align:center;padding:24px 0;color:#ef4444;font-size:13px;">Failed to load notifications.</div>`;
+    console.error(err);
+  }
+}
+
+// Load on page start
+fetchRecentNotifications();
+</script>
+</body>
+</html>

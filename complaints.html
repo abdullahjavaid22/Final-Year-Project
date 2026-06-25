@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Complaints</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0f1e;
+    --sidebar-w: 240px;
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6;
+    --muted: rgba(232,234,246,0.45);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ink); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: rgba(255,255,255,0.025); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 22px 28px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(79,110,247,0.35); }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-dept { font-size: 10px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; }
+  .nav-section { margin-top: 24px; padding: 0 12px; }
+  .nav-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; padding: 0 10px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-size: 13.5px; transition: all 0.2s; margin-bottom: 2px; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: linear-gradient(135deg, rgba(79,110,247,0.2), rgba(124,58,237,0.12)); color: var(--text); border: 1px solid rgba(79,110,247,0.2); }
+  .nav-item .badge-nav { margin-left: auto; background: var(--accent); color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+  .sidebar-bottom { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: white; }
+  .user-info .u-name { font-size: 13px; font-weight: 500; }
+  .user-info .u-role { font-size: 11px; color: var(--muted); }
+
+  /* Main */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+  .topbar { padding: 20px 36px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(10,15,30,0.6); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 50; }
+  .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar-left p { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; box-shadow: 0 4px 14px rgba(79,110,247,0.3); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(79,110,247,0.4); }
+  .btn-ghost { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+  .content { padding: 32px 36px; }
+
+  .user-type-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: 12px; margin-bottom: 18px;
+  }
+  .user-type-banner.faculty-banner { background: rgba(124,58,237,0.12); border: 1.5px solid rgba(124,58,237,0.3); }
+  .user-type-banner.student-banner { background: rgba(16,185,129,0.10); border: 1.5px solid rgba(16,185,129,0.28); }
+  .user-type-banner.unknown-banner { background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+  .banner-avatar { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: white; overflow: hidden; }
+  .banner-avatar.faculty-av { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+  .banner-avatar.student-av { background: linear-gradient(135deg, #059669, #10b981); }
+  .banner-avatar.unknown-av { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .banner-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .banner-info { flex: 1; min-width: 0; }
+  .banner-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .banner-email { font-size: 11.5px; color: var(--muted); }
+  .banner-type-pill { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+  .pill-faculty { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; box-shadow: 0 3px 10px rgba(124,58,237,0.35); }
+  .pill-student { background: linear-gradient(135deg, #059669, #10b981); color: white; box-shadow: 0 3px 10px rgba(16,185,129,0.3); }
+  .pill-unknown { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .firebase-user-block { background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+  .firebase-user-block-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .firebase-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; background: rgba(255,160,0,0.15); color: #ffa000; border: 1px solid rgba(255,160,0,0.25); letter-spacing: 0.5px; }
+  .supabase-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; background: rgba(62,207,142,0.12); color: #3ecf8e; border: 1px solid rgba(62,207,142,0.25); letter-spacing: 0.5px; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search-inp { width: 100%; padding: 10px 14px 10px 38px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px; outline: none; transition: all 0.2s; }
+  .search-inp::placeholder { color: var(--muted); }
+  .search-inp:focus { border-color: var(--accent); background: rgba(79,110,247,0.06); box-shadow: 0 0 0 3px rgba(79,110,247,0.12); }
+  .filter-tabs { display: flex; gap: 6px; }
+  .filter-tab { padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; color: var(--muted); background: transparent; }
+  .filter-tab:hover { background: var(--surface); color: var(--text); }
+  .filter-tab.active { background: rgba(79,110,247,0.15); border-color: rgba(79,110,247,0.25); color: var(--text); }
+
+  .section-label { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  /* Table */
+  .table-wrap { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeUp 0.5s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  th { padding: 14px 20px; text-align: left; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.18s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  td { padding: 16px 20px; font-size: 13.5px; vertical-align: middle; }
+  .id-cell { color: var(--muted); font-size: 12px; font-family: monospace; }
+  .cat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+  .badge { font-size: 11.5px; font-weight: 500; padding: 5px 11px; border-radius: 20px; display: inline-block; letter-spacing: 0.3px; }
+  .badge-pending    { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+  .badge-progress   { background: rgba(59,130,246,0.12);  color: var(--info);    border: 1px solid rgba(59,130,246,0.2); }
+  .badge-resolved   { background: rgba(16,185,129,0.12);  color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+  .badge-successful { background: rgba(16,185,129,0.22);  color: #34d399;        border: 1px solid rgba(16,185,129,0.45); font-weight:600; }
+  .action-btn { padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.18s; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+  .action-btn:hover { background: rgba(79,110,247,0.15); border-color: rgba(79,110,247,0.3); }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #131929; border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; box-shadow: 0 40px 80px rgba(0,0,0,0.5); animation: modalIn 0.3s cubic-bezier(.22,1,.36,1); }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .modal-top { padding: 24px 24px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .modal-ico { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
+  .modal-id { font-size: 11px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 4px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .modal-cat { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .close-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .close-btn:hover { color: var(--text); }
+  .modal-divider { height: 1px; background: var(--border); margin: 20px 0 0; }
+  .modal-body { padding: 22px 24px; }
+  .detail-row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; font-size: 13.5px; }
+  .detail-label { color: var(--muted); font-size: 12px; min-width: 96px; padding-top: 1px; }
+  .detail-val { color: var(--text); flex: 1; line-height: 1.5; }
+  .desc-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 22px; }
+  .modal-footer { display: flex; gap: 10px; flex-wrap: wrap; }
+  .status-select { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; appearance: none; cursor: pointer; }
+  .status-select option { background: #131929; }
+  .btn-update { padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(79,110,247,0.3); transition: all 0.2s; }
+  .btn-update:hover { transform: translateY(-1px); }
+
+  /* Spinner */
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13.5px; }
+
+  /* Status Flow */
+  .status-flow { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 4px; }
+  .sf-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .sf-btns { display: flex; gap: 10px; margin-bottom: 0; }
+  .sf-btn { flex: 1; padding: 11px 16px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent; }
+  .sf-progress { background: rgba(59,130,246,0.12); color: var(--info); border-color: rgba(59,130,246,0.25); }
+  .sf-progress:hover { background: rgba(59,130,246,0.22); border-color: rgba(59,130,246,0.45); }
+  .sf-progress.sf-active { background: rgba(59,130,246,0.25); border-color: var(--info); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  .sf-success { background: rgba(16,185,129,0.12); color: var(--success); border-color: rgba(16,185,129,0.25); }
+  .sf-success:hover:not(:disabled) { background: rgba(16,185,129,0.22); border-color: rgba(16,185,129,0.45); }
+  .sf-locked, .sf-success:disabled { opacity: 0.38; cursor: not-allowed; filter: grayscale(0.4); }
+  .sf-confirm { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border: none; box-shadow: 0 4px 14px rgba(79,110,247,0.3); flex: 0 0 auto; padding: 10px 18px; }
+  .sf-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(79,110,247,0.4); }
+  .sf-duration-wrap { margin-top: 14px; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 14px 16px; animation: fadeUp 0.25s ease; }
+  .sf-dur-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-weight: 500; }
+  .sf-dur-row { display: flex; gap: 8px; align-items: center; }
+  .sf-dur-inp { flex: 1; padding: 9px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; min-width: 0; }
+  .sf-dur-inp:focus { border-color: var(--accent); background: rgba(79,110,247,0.06); }
+  .sf-dur-unit { padding: 9px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; cursor: pointer; }
+  .sf-dur-unit option { background: #131929; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-dept" id="deptLogoSubtitle">Department Portal</div>
+    </div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-label">Main</div>
+    <a href="dashboard.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="complaints.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Complaints
+      <span class="badge-nav" id="complaintNavBadge">0</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Departments
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </a>
+  </nav>
+  <nav class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">System</div>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      Settings
+    </a>
+    <a href="login.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">AD</div>
+      <div class="user-info">
+        <div class="u-name">Admin User</div>
+        <div class="u-role">Department Head</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="deptComplaintsTitle">Assigned Complaints</h1>
+      <p>Manage, track and update complaint statuses</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Export
+      </button>
+      <button class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Complaint
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-label">Complaints</div>
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" type="text" placeholder="Search complaints…" oninput="filterTable(this.value)">
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterStatus('all', this)">All</button>
+        <button class="filter-tab" onclick="filterStatus('pending', this)">Pending</button>
+        <button class="filter-tab" onclick="filterStatus('progress', this)">In Progress</button>
+        <button class="filter-tab" onclick="filterStatus('resolved', this)">Resolved</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="complaintTable">
+        <thead>
+          <tr>
+            <th>ID</th><th>Category</th><th>Issue</th><th>Reported</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="complaintTableBody"></tbody>
+      </table>
+      <div style="padding:14px 20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+        <span id="complaintCount" style="font-size:12px;color:var(--muted);">Loading…</span>
+        <div style="display:flex;gap:6px;">
+          <button class="action-btn" style="padding:6px 12px;font-size:12px;">← Prev</button>
+          <button class="action-btn" style="padding:6px 12px;font-size:12px;background:rgba(79,110,247,0.15);border-color:rgba(79,110,247,0.3);">1</button>
+          <button class="action-btn" style="padding:6px 12px;font-size:12px;">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="dynamicModals"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  const SUPABASE_URL = 'https://nxufdvaffsygzutcztzr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+  const DEPT_TABLE_MAP = {
+    electricity:'electricity_complaints', exam:'exam_complaints', water:'water_complaints',
+    studentaffairs:'student_affairs_complaints', transport:'transport_complaints',
+    hostel:'hostel_complaints', finance:'finance_complaints', library:'library_complaints',
+    security:'security_complaints', academic:'academic_complaints',
+    building:'building_complaints', network:'network_complaints'
+  };
+
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const deptSlug = localStorage.getItem('deptSlug');
+  const deptName = localStorage.getItem('deptName') || 'Department';
+  const tableName = DEPT_TABLE_MAP[deptSlug] || deptSlug;
+
+  document.getElementById('deptLogoSubtitle').textContent = deptName;
+  document.getElementById('deptComplaintsTitle').textContent = deptName + ' — Assigned Complaints';
+
+  let allComplaints = [];
+  let currentStatus = 'all';
+  let currentSearch = '';
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── FIX: normalizeStatus now handles ALL known values including
+  //         "marked_resolved" (legacy) and "resolved" (current app write) ──
+  function normalizeStatus(s) {
+    s = String(s || 'pending').toLowerCase().trim();
+    if (s === 'in_progress' || s === 'progress' || s === 'in progress') return 'progress';
+    if (s === 'successful'  || s === 'success')                          return 'successful';
+    if (s === 'resolved'    || s === 'marked_resolved')                  return 'resolved';
+    return 'pending';
+  }
+
+  function statusLabel(s) {
+    const n = normalizeStatus(s);
+    if (n === 'progress')   return 'In Progress';
+    if (n === 'successful') return 'Successful';
+    if (n === 'resolved')   return 'Resolved';
+    return 'Pending';
+  }
+  function statusBadgeClass(s) {
+    const n = normalizeStatus(s);
+    if (n === 'progress')   return 'badge-progress';
+    if (n === 'successful') return 'badge-successful';
+    if (n === 'resolved')   return 'badge-resolved';
+    return 'badge-pending';
+  }
+  function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return isNaN(dt) ? String(d) : dt.toLocaleString(undefined, {year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  }
+
+  function updateTabCounts() {
+    const b = document.getElementById('complaintNavBadge');
+    if (b) b.textContent = allComplaints.length;
+  }
+
+  function applyFilters() {
+    let vis = 0;
+    document.querySelectorAll('#complaintTableBody tr[data-id]').forEach(function(row) {
+      const ok = (currentStatus === 'all' || row.dataset.status === currentStatus) &&
+                 (!currentSearch || (row.dataset.search || '').includes(currentSearch));
+      row.style.display = ok ? '' : 'none';
+      if (ok) vis++;
+    });
+    const c = document.getElementById('complaintCount');
+    if (c) c.textContent = 'Showing ' + vis + ' of ' + allComplaints.length + ' complaints';
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('complaintTableBody');
+    if (!allComplaints.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">No complaints found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = allComplaints.map(function(c) {
+      const id     = c.id;
+      const status = c._csStatus || normalizeStatus(c.status);
+      const search = [c.title, c.description, c.roll_number, c.email].filter(Boolean).join(' ').toLowerCase();
+      return '<tr data-status="' + status + '" data-id="' + escapeHtml(id) + '" data-search="' + escapeHtml(search) + '">' +
+        '<td class="id-cell">#' + escapeHtml(id) + '</td>' +
+        '<td><span class="cat-chip" style="background:rgba(79,110,247,0.1);color:var(--accent);">' + escapeHtml(c.category || deptName) + '</span></td>' +
+        '<td style="font-weight:500;">' + escapeHtml(c.title || 'Untitled') + '</td>' +
+        '<td style="color:var(--muted);font-size:12.5px;">' + escapeHtml(formatDate(c.date || c.created_at)) + '</td>' +
+        '<td><span class="badge ' + statusBadgeClass(status) + '">' + statusLabel(status) + '</span></td>' +
+        '<td><button class="action-btn" onclick="openModal(\'modal-' + escapeHtml(id) + '\')">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View' +
+        '</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderModals() {
+    const container = document.getElementById('dynamicModals');
+    container.innerHTML = allComplaints.map(function(c) {
+      const id           = c.id;
+      const modalId      = 'modal-' + id;
+      const status       = c._csStatus || normalizeStatus(c.status);
+      const isResolved   = (status === 'resolved');
+      const isSuccessful = (status === 'successful');
+      const isProgress   = (status === 'progress');
+      const isPending    = (status === 'pending');
+      const progressLocked = isResolved || isSuccessful;
+      const successLocked  = isPending || isResolved || isSuccessful;
+      return (
+        '<div class="modal-overlay" id="' + modalId + '">' +
+          '<div class="modal-box">' +
+            '<div class="modal-top">' +
+              '<div>' +
+                '<div class="modal-ico" style="background:rgba(79,110,247,0.12);">📋</div>' +
+                '<div class="modal-id">Complaint ID · #' + escapeHtml(id) + '</div>' +
+                '<div class="modal-title">' + escapeHtml(c.title || 'Untitled') + '</div>' +
+                '<div class="modal-cat">' + escapeHtml(deptName) + '</div>' +
+              '</div>' +
+              '<button class="close-btn" onclick="closeModal(\'' + modalId + '\')">' +
+                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="modal-divider"></div>' +
+            '<div class="modal-body">' +
+              '<div id="fb-profile-' + escapeHtml(id) + '" style="margin-bottom:4px;">' +
+                '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">' +
+                  '<span style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Submitted By</span>' +
+                '</div>' +
+                '<div id="fb-banner-' + escapeHtml(id) + '">' +
+                  '<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;">' +
+                    '<span class="spinner"></span>' +
+                    '<span style="font-size:12.5px;color:var(--muted);">Looking up user profile…</span>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="modal-divider" style="margin:16px 0;"></div>' +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">' +
+                '<span style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Complaint Details</span>' +
+              '</div>' +
+              '<div class="detail-row"><span class="detail-label">Title</span><span class="detail-val" style="font-weight:600;">' + escapeHtml(c.title || '—') + '</span></div>' +
+              '<div class="detail-row"><span class="detail-label">Priority</span><span class="detail-val">' + escapeHtml(c.priority || '—') + '</span></div>' +
+              '<div class="detail-row"><span class="detail-label">Date</span><span class="detail-val">' + escapeHtml(formatDate(c.date || c.created_at)) + '</span></div>' +
+              '<div class="detail-row"><span class="detail-label">Status</span><span class="detail-val"><span class="badge ' + statusBadgeClass(status) + '">' + statusLabel(status) + '</span></span></div>' +
+              '<div class="detail-row"><span class="detail-label">Description</span></div>' +
+              '<div class="desc-box">' + escapeHtml(c.description || 'No description provided.') + '</div>' +
+              '<div class="modal-divider" style="margin:4px 0 20px;"></div>' +
+              '<div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Current Status Record</div>' +
+              '<div id="cs-status-' + escapeHtml(id) + '">' +
+                '<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;">' +
+                  '<span class="spinner"></span>' +
+                  '<span style="font-size:12.5px;color:var(--muted);">Fetching latest status…</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="status-flow" data-flow="' + escapeHtml(id) + '">' +
+                '<div class="sf-label">Update Status</div>' +
+                '<div class="sf-btns">' +
+                  '<button class="sf-btn sf-progress' + (progressLocked ? ' sf-locked' : '') + '" data-flow-progress="' + escapeHtml(id) + '" ' + (progressLocked ? 'disabled' : '') + '>⏱ In Progress</button>' +
+                  '<button class="sf-btn sf-success' + (successLocked ? ' sf-locked' : '') + '" data-flow-success="' + escapeHtml(id) + '" ' + (successLocked ? 'disabled' : '') + '>✅ Successful</button>' +
+                '</div>' +
+                '<div class="sf-duration-wrap" id="sf-dur-' + escapeHtml(id) + '" style="display:none;">' +
+                  '<div class="sf-dur-label">Estimated time to resolve</div>' +
+                  '<div class="sf-dur-row">' +
+                    '<input class="sf-dur-inp" type="number" min="1" placeholder="e.g. 3" id="sf-dur-num-' + escapeHtml(id) + '" />' +
+                    '<select class="sf-dur-unit" id="sf-dur-unit-' + escapeHtml(id) + '">' +
+                      '<option value="hours">Hours</option>' +
+                      '<option value="days" selected>Days</option>' +
+                      '<option value="weeks">Weeks</option>' +
+                    '</select>' +
+                    '<button class="sf-btn sf-confirm" data-flow-confirm="' + escapeHtml(id) + '">Confirm</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    container.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+      overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(overlay.id); });
+    });
+
+    container.querySelectorAll('[data-flow-progress]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const id = btn.getAttribute('data-flow-progress');
+        const durWrap = document.getElementById('sf-dur-' + id);
+        if (durWrap) durWrap.style.display = '';
+        btn.classList.add('sf-active');
+        const successBtn = document.querySelector('[data-flow-success="' + id + '"]');
+        if (successBtn) { successBtn.disabled = false; successBtn.classList.remove('sf-locked'); }
+      });
+    });
+
+    container.querySelectorAll('[data-flow-success]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.disabled) return;
+        const id = btn.getAttribute('data-flow-success');
+        saveComplaintStatus(id, 'successful', null);
+      });
+    });
+
+    container.querySelectorAll('[data-flow-confirm]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const id = btn.getAttribute('data-flow-confirm');
+        const numEl  = document.getElementById('sf-dur-num-' + id);
+        const unitEl = document.getElementById('sf-dur-unit-' + id);
+        const num  = numEl ? numEl.value.trim() : '';
+        const unit = unitEl ? unitEl.value : 'days';
+        if (!num || isNaN(num) || Number(num) < 1) {
+          numEl.style.borderColor = 'var(--danger)';
+          numEl.focus();
+          return;
+        }
+        numEl.style.borderColor = '';
+        saveComplaintStatus(id, 'progress', num + ' ' + unit);
+      });
+    });
+  }
+
+  async function saveComplaintStatus(id, newStatus, duration) {
+    if (!tableName) return;
+    const confirmBtn = document.querySelector('[data-flow-confirm="' + id + '"]');
+    const successBtn = document.querySelector('[data-flow-success="' + id + '"]');
+    const activeBtn  = (newStatus === 'resolved' || newStatus === 'successful') ? successBtn : confirmBtn;
+    if (activeBtn) { activeBtn.disabled = true; activeBtn.textContent = 'Saving...'; }
+
+    const { error: err1 } = await client.from(tableName).update({ status: newStatus }).eq('id', id);
+    if (err1) {
+      if (activeBtn) { activeBtn.disabled = false; activeBtn.textContent = (newStatus === 'resolved' || newStatus === 'successful') ? '✅ Successful' : 'Confirm'; }
+      alert('Failed to update complaint: ' + err1.message);
+      return;
+    }
+
+    const complaint = allComplaints.find(function(x) { return String(x.id) === String(id); });
+    const complaintTitle = complaint ? (complaint.title || 'your complaint') : 'your complaint';
+    let autoMsg = '';
+    if (newStatus === 'progress') {
+      autoMsg = 'Dear user, your complaint "' + complaintTitle + '" has been received and is currently In Progress. ' +
+                'Our team is actively working on it and we will endeavour to resolve it within the next ' + duration + '. ' +
+                'We appreciate your patience and will keep you updated on any developments. ' +
+                'Thank you for bringing this matter to our attention.';
+    } else if (newStatus === 'resolved' || newStatus === 'successful') {
+      autoMsg = 'Dear user, we are pleased to inform you that your complaint "' + complaintTitle + '" has been successfully resolved. ' +
+                'Our team has completed all necessary actions regarding this matter. ' +
+                'If you have any further concerns or require additional assistance, please do not hesitate to contact us. ' +
+                'Thank you for your patience throughout this process.';
+    }
+
+    const statusRecord = {
+      complaint_id:    String(id),
+      complaint_table: tableName,
+      status:          newStatus,
+      message:         autoMsg,
+      updated_at:      new Date().toISOString()
+    };
+    if (duration) statusRecord.time_duration = duration;
+
+    const { error: err2 } = await client
+      .from('complaint_status')
+      .upsert(statusRecord, { onConflict: 'complaint_id' });
+    if (err2) { console.warn('complaint_status upsert failed:', err2.message); }
+
+    if (activeBtn) { activeBtn.disabled = false; activeBtn.textContent = (newStatus === 'resolved' || newStatus === 'successful') ? '✅ Successful' : 'Confirm'; }
+
+    if (complaint) {
+      complaint.status        = newStatus;
+      complaint._csStatus     = normalizeStatus(newStatus);
+      complaint._rawCsStatus  = newStatus;
+      if (duration) complaint.time_duration = duration;
+    }
+    renderTable(); renderModals(); updateTabCounts(); applyFilters();
+    closeModal('modal-' + id);
+  }
+
+  async function fetchComplaints() {
+    document.getElementById('complaintTableBody').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);"><span class="spinner"></span> Loading...</td></tr>';
+    if (!tableName) {
+      document.getElementById('complaintTableBody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);">No department selected.</td></tr>';
+      return;
+    }
+
+    // ── FIX: fetch complaint_status WITHOUT filtering by complaint_table
+    //         so that rows written by the app (which have no complaint_table) are included ──
+    const [compRes, csRes] = await Promise.all([
+      client.from(tableName).select('*'),
+      client.from('complaint_status').select('complaint_id, status, time_duration, message, updated_at, user_email')
+    ]);
+
+    if (compRes.error) {
+      document.getElementById('complaintTableBody').innerHTML =
+        '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);">Error: ' + escapeHtml(compRes.error.message) + '</td></tr>';
+      return;
+    }
+
+    const csMap = {};
+    (csRes.data || []).forEach(function(row) { csMap[String(row.complaint_id)] = row; });
+
+    allComplaints = (compRes.data || []).map(function(c) {
+      const cs = csMap[String(c.id)];
+      if (cs) {
+        c._csStatus    = normalizeStatus(cs.status);
+        c._rawCsStatus = cs.status;
+        c.time_duration = cs.time_duration || c.time_duration;
+      } else {
+        c._csStatus    = normalizeStatus(c.status);
+        c._rawCsStatus = c.status;
+      }
+      return c;
+    });
+
+    const statusOrder   = { pending: 0, progress: 1, successful: 2, resolved: 3 };
+    const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+    allComplaints.sort(function(a, b) {
+      const sa = statusOrder[a._csStatus] ?? 99;
+      const sb = statusOrder[b._csStatus] ?? 99;
+      if (sa !== sb) return sa - sb;
+      const pa = priorityOrder[(a.priority || '').toLowerCase()] ?? 99;
+      const pb = priorityOrder[(b.priority || '').toLowerCase()] ?? 99;
+      return pa - pb;
+    });
+
+    renderTable(); renderModals(); updateTabCounts(); applyFilters();
+  }
+
+  async function fetchComplaintStatusRecord(cid) {
+    const el = document.getElementById('cs-status-' + cid);
+    if (!el) return;
+    const { data, error } = await client.from('complaint_status').select('*').eq('complaint_id', String(cid)).maybeSingle();
+    if (error || !data) {
+      el.innerHTML = '<div style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;font-size:12.5px;color:var(--muted);">No status record yet.</div>';
+      return;
+    }
+    const n = normalizeStatus(data.status);
+    const complaint = allComplaints.find(function(c) { return String(c.id) === String(cid); });
+    if (complaint && complaint._csStatus !== n) {
+      complaint._csStatus    = n;
+      complaint._rawCsStatus = data.status;
+    }
+    const sColor = n === 'resolved' ? 'var(--success)' : n === 'successful' ? '#34d399' : n === 'progress' ? 'var(--info)' : 'var(--warning)';
+    const sLabel = n === 'resolved' ? 'Resolved ✅' : n === 'successful' ? 'Successful ✅' : n === 'progress' ? 'In Progress ⏳' : 'Pending 🕐';
+    el.innerHTML =
+      '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">' +
+        '<div class="detail-row" style="margin-bottom:8px;"><span class="detail-label">Status</span><span class="detail-val" style="color:' + sColor + ';font-weight:600;">' + sLabel + '</span></div>' +
+        (data.time_duration ? '<div class="detail-row" style="margin-bottom:8px;"><span class="detail-label">Est. Duration</span><span class="detail-val">' + escapeHtml(data.time_duration) + '</span></div>' : '') +
+        (data.updated_at    ? '<div class="detail-row" style="margin-bottom:8px;"><span class="detail-label">Last Updated</span><span class="detail-val" style="font-size:12px;color:var(--muted);">' + escapeHtml(formatDate(data.updated_at)) + '</span></div>' : '') +
+        (data.message       ? '<div style="margin-top:10px;padding:12px 14px;background:rgba(79,110,247,0.06);border:1px solid rgba(79,110,247,0.18);border-radius:10px;font-size:12.5px;color:var(--muted);line-height:1.6;">' + escapeHtml(data.message).replace(/\n/g,'<br>') + '</div>' : '') +
+      '</div>';
+  }
+
+  window.openModal = function(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const cid = id.replace(/^modal-/, '');
+    const complaint = allComplaints.find(function(c) { return String(c.id) === String(cid); });
+    if (complaint && complaint.email && window.__fbLookupUser) {
+      window.__fbLookupUser(complaint.email, cid, complaint.roll_number, complaint.semester, complaint.shift);
+    }
+    fetchComplaintStatusRecord(cid);
+  };
+
+  window.closeModal = function(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  window.filterStatus = function(status, btn) {
+    document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    currentStatus = status;
+    applyFilters();
+  };
+
+  window.filterTable = function(val) {
+    currentSearch = (val || '').toLowerCase();
+    applyFilters();
+  };
+
+  fetchComplaints();
+})();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBqzzG8BbSmdi4_xX7i3BhfjfKQJ6_yXJU",
+    authDomain: "digisolution-cb142.firebaseapp.com",
+    projectId: "digisolution-cb142",
+    storageBucket: "digisolution-cb142.firebasestorage.app",
+    messagingSenderId: "316125254020",
+    appId: "1:316125254020:web:40c82456d8f9e9aee7cdd1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  let allUsers = [];
+
+  function getInitials(name) {
+    if (!name) return '?';
+    return name.trim().split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  window.__fbLookupUser = function(email, complaintId, rollNumber, semester, shift) {
+    const bannerEl = document.getElementById('fb-banner-' + complaintId);
+    if (!bannerEl) return;
+    const found = allUsers.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+    if (!found) {
+      bannerEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;">' +
+          '<span style="font-size:20px;">👤</span>' +
+          '<div><div style="font-size:13px;font-weight:500;color:var(--text);">No matching profile found</div>' +
+          '<div style="font-size:11.5px;color:var(--muted);">' + email + ' is not registered in Firebase</div></div>' +
+        '</div>';
+      return;
+    }
+    const role      = found.role || found._collection || 'Unknown';
+    const isFaculty = role.toLowerCase() === 'faculty';
+    const isStudent = role.toLowerCase() === 'student';
+    const bannerCls = isFaculty ? 'faculty-banner' : isStudent ? 'student-banner' : 'unknown-banner';
+    const avatarCls = isFaculty ? 'faculty-av'    : isStudent ? 'student-av'    : 'unknown-av';
+    const pillCls   = isFaculty ? 'pill-faculty'  : isStudent ? 'pill-student'  : 'pill-unknown';
+    const initials  = getInitials(found.name);
+    const avatarInner = found.image_url
+      ? `<img src="${found.image_url}" alt="${found.name||''}" onerror="this.parentElement.textContent='${initials}'">`
+      : initials;
+    bannerEl.innerHTML =
+      `<div class="user-type-banner ${bannerCls}">
+        <div class="banner-avatar ${avatarCls}">${avatarInner}</div>
+        <div class="banner-info">
+          <div class="banner-name">${found.name || '—'}</div>
+          <div class="banner-email">${found.email || '—'}</div>
+        </div>
+        <span class="banner-type-pill ${pillCls}">${role}</span>
+      </div>` +
+      `<div class="firebase-user-block">
+        <div class="firebase-user-block-title">Profile Details</div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Full Name</span><span class="detail-val" style="font-weight:600;">${found.name || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Email</span><span class="detail-val">${found.email || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Phone</span><span class="detail-val">${found.phone || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Address</span><span class="detail-val">${found.address || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Roll Number</span><span class="detail-val">${rollNumber || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Semester</span><span class="detail-val">${semester || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:10px;"><span class="detail-label">Shift</span><span class="detail-val">${shift || '—'}</span></div>
+        <div class="detail-row" style="margin-bottom:0;"><span class="detail-label">User Type</span><span class="detail-val"><span class="banner-type-pill ${pillCls}" style="font-size:11px;">${role}</span></span></div>
+      </div>`;
+  };
+
+  async function fetchUsers() {
+    try {
+      const [facSnap, stuSnap] = await Promise.all([
+        getDocs(collection(db, 'Faculty')),
+        getDocs(collection(db, 'Students'))
+      ]);
+      const faculty  = facSnap.docs.map(d => ({ ...d.data(), _collection: 'Faculty',  role: d.data().role || 'Faculty'  }));
+      const students = stuSnap.docs.map(d => ({ ...d.data(), _collection: 'Students', role: d.data().role || 'Student' }));
+      allUsers = [...faculty, ...students];
+    } catch(err) {
+      console.warn('Firebase user fetch failed:', err.message);
+    }
+  }
+  fetchUsers();
+</script>
+</body>
+</html>

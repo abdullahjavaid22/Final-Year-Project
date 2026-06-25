@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Departments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6;
+    --muted: rgba(232,234,246,0.45);
+    --sidebar-w: 240px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0f1e;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: rgba(255,255,255,0.025);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 28px 0;
+    position: fixed; inset: 0 auto 0 0;
+    z-index: 100;
+    backdrop-filter: blur(18px);
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 22px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(79,110,247,0.35);
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+  .nav-wrap { flex: 1; padding: 18px 12px 0; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    text-decoration: none; color: var(--muted);
+    font-size: 13.5px; margin-bottom: 4px;
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: rgba(79,110,247,0.2); border-color: rgba(79,110,247,0.2); color: var(--text); }
+  .nav-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+  }
+  .sidebar-bottom { padding: 16px 12px 0; margin-top: auto; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800;
+    color: white; display: flex; align-items: center; justify-content: center;
+  }
+  .u-name { font-size: 13px; font-weight: 600; }
+  .u-role { font-size: 11px; color: var(--muted); }
+
+  /* ── Layout ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    padding: 20px 36px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,15,30,0.65);
+    backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar p { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.14); }
+
+  .content { padding: 28px 36px 40px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes grow { to { width: var(--p, 0%); } }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .sum-chip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--surface);
+  }
+  .sum-chip .val { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; }
+  .sc-total   { color: var(--text); }
+  .sc-pending { color: var(--warning); border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.06); }
+  .sc-prog    { color: var(--info);    border-color: rgba(59,130,246,0.2);  background: rgba(59,130,246,0.06); }
+  .sc-succ    { color: #14b8a6;        border-color: rgba(20,184,166,0.2);  background: rgba(20,184,166,0.06); }
+  .sc-res     { color: var(--success); border-color: rgba(16,185,129,0.2);  background: rgba(16,185,129,0.06); }
+  .sc-tout    { color: var(--danger);  border-color: rgba(239,68,68,0.2);   background: rgba(239,68,68,0.06); }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 22px 50px rgba(0,0,0,0.22); }
+
+  .card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 4px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
+    letter-spacing: -0.2px; display: flex; align-items: center; gap: 8px;
+  }
+  .active-pill {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(16,185,129,0.12); color: var(--success);
+    border: 1px solid rgba(16,185,129,0.22); white-space: nowrap;
+  }
+  .card-sub {
+    font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.4;
+  }
+
+  /* Stats grid inside card */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 14px;
+  }
+  .stat-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  .sv-total   { color: var(--text); }
+  .sv-pending { color: var(--warning); }
+  .sv-prog    { color: var(--info); }
+  .sv-succ    { color: #14b8a6; }
+  .sv-res     { color: var(--success); }
+  .sv-tout    { color: var(--danger); }
+
+  /* Progress bar */
+  .pbar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; margin-bottom: 0; }
+  .pfill { height: 100%; border-radius: 3px; width: 0; animation: grow 1s cubic-bezier(.22,1,.36,1) forwards; }
+
+  /* Skeleton loader */
+  .skel {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* Global loading / error */
+  .state-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 64px 24px; gap: 14px; color: var(--muted); grid-column: 1 / -1;
+  }
+  .spinner {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 3px solid rgba(79,110,247,0.15);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 720px)  { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" aria-label="Admin navigation">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <a class="nav-item" href="admin-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="admin-complaints.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Complaints
+      <span class="nav-badge" id="totalBadge">…</span>
+    </a>
+    <a class="nav-item" href="admin-feedbacks.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedbacks
+    </a>
+    <a class="nav-item active" href="admin-departments.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+      Departments
+    </a>
+    <a class="nav-item" href="admin-register.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Register Users
+    </a>
+    <a class="nav-item" href="admin-notifications.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="admin-login.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">AD</div>
+      <div>
+        <div class="u-name">Admin User</div>
+        <div class="u-role">System Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div>
+      <h1>Departments</h1>
+      <p>Live complaint stats per department</p>
+    </div>
+    <button type="button" class="btn-ghost" id="refreshBtn">↺ Refresh</button>
+  </header>
+
+  <main class="content">
+
+    <!-- Global summary bar -->
+    <div class="summary-bar" id="summaryBar" style="display:none;">
+      <div class="sum-chip sc-total">Total <span class="val" id="s-total">0</span></div>
+      <div class="sum-chip sc-pending">Pending <span class="val" id="s-pending">0</span></div>
+      <div class="sum-chip sc-prog">In Progress <span class="val" id="s-prog">0</span></div>
+      <div class="sum-chip sc-succ">Successful <span class="val" id="s-succ">0</span></div>
+      <div class="sum-chip sc-res">Resolved <span class="val" id="s-res">0</span></div>
+      <div class="sum-chip sc-tout">⏰ Timed Out <span class="val" id="s-tout">0</span></div>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="state-box">
+        <div class="spinner"></div>
+        <p>Loading department data…</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://nxufdvaffsygzutcztzr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── Department definitions ───────────────────────────────────────────────────
+const DEPARTMENTS = [
+  { table: 'electricity_complaints',     label: 'Electricity Dept',    sub: 'Power & electrical issues',    emoji: '⚡', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+  { table: 'exam_complaints',            label: 'Exam Dept',           sub: 'Examination complaints',       emoji: '📝', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+  { table: 'water_complaints',           label: 'Water Dept',          sub: 'Water supply issues',          emoji: '💧', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+  { table: 'student_affairs_complaints', label: 'Student Affairs',     sub: 'Student welfare & services',   emoji: '🎓', color: '#4f6ef7', bg: 'rgba(79,110,247,0.12)' },
+  { table: 'transport_complaints',       label: 'Transport Dept',      sub: 'Bus & transport issues',       emoji: '🚌', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  { table: 'hostel_complaints',          label: 'Hostel Dept',         sub: 'Hostel & accommodation',       emoji: '🏠', color: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
+  { table: 'finance_complaints',         label: 'Finance Dept',        sub: 'Fees & financial matters',     emoji: '💰', color: '#14b8a6', bg: 'rgba(20,184,166,0.12)' },
+  { table: 'library_complaints',         label: 'Library Dept',        sub: 'Library services',             emoji: '📚', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
+  { table: 'security_complaints',        label: 'Security Dept',       sub: 'Campus security issues',       emoji: '🔒', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+  { table: 'academic_complaints',        label: 'Academic Dept',       sub: 'Academic & curriculum',        emoji: '🎒', color: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
+  { table: 'building_complaints',        label: 'Building Dept',       sub: 'Infrastructure & repairs',     emoji: '🏗️', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  { table: 'network_complaints',         label: 'Network Dept',        sub: 'WiFi & network issues',        emoji: '🌐', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function normaliseStatus(raw) {
+  if (!raw) return 'pending';
+  const s = raw.toLowerCase().replace(/[\s_-]/g, '');
+  if (s === 'resolved' || s === 'markedresolved') return 'resolved';
+  if (s === 'successful' || s === 'success')      return 'successful';
+  if (s === 'inprogress' || s === 'progress')     return 'progress';
+  return 'pending';
+}
+
+function parseDuration(str) {
+  if (!str) return null;
+  const m = str.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)\s*(second|minute|hour|day|week|month)s?$/);
+  if (!m) return null;
+  const map = { second:1000, minute:60000, hour:3600000, day:86400000, week:604800000, month:2592000000 };
+  return parseFloat(m[1]) * (map[m[2]] || 0);
+}
+
+function isTimedOut(updatedAt, timeDuration) {
+  if (!updatedAt || !timeDuration) return false;
+  const dur = parseDuration(timeDuration);
+  if (!dur) return false;
+  const deadline = new Date(updatedAt).getTime() + dur;
+  return deadline < Date.now();
+}
+
+// ─── Main loader ──────────────────────────────────────────────────────────────
+async function loadAll() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading department data…</p></div>`;
+  document.getElementById('summaryBar').style.display = 'none';
+
+  try {
+    // Fetch all status rows once
+    const { data: statusRows, error: statusErr } = await sb
+      .from('complaint_status')
+      .select('complaint_id, status, time_duration, updated_at');
+    if (statusErr) throw statusErr;
+
+    const statusMap = {};
+    (statusRows || []).forEach(r => { statusMap[r.complaint_id] = r; });
+
+    // Fetch all dept tables in parallel
+    const results = await Promise.all(
+      DEPARTMENTS.map(async (dept) => {
+        const { data, error } = await sb
+          .from(dept.table)
+          .select('id, status');
+        if (error) { console.warn(dept.table, error.message); return { dept, counts: null }; }
+
+        const counts = { total: 0, pending: 0, progress: 0, successful: 0, resolved: 0, timedout: 0 };
+        (data || []).forEach(row => {
+          counts.total++;
+          const sr        = statusMap[row.id];
+          const rawStatus = sr ? sr.status : (row.status || 'pending');
+          const norm      = normaliseStatus(rawStatus);
+          counts[norm]    = (counts[norm] || 0) + 1;
+          if (isTimedOut(sr?.updated_at, sr?.time_duration)) counts.timedout++;
+        });
+        return { dept, counts };
+      })
+    );
+
+    // Global summary totals
+    const global = { total:0, pending:0, progress:0, successful:0, resolved:0, timedout:0 };
+    results.forEach(({ counts }) => {
+      if (!counts) return;
+      Object.keys(global).forEach(k => { global[k] += counts[k] || 0; });
+    });
+    document.getElementById('s-total').textContent   = global.total;
+    document.getElementById('s-pending').textContent = global.pending;
+    document.getElementById('s-prog').textContent    = global.progress;
+    document.getElementById('s-succ').textContent    = global.successful;
+    document.getElementById('s-res').textContent     = global.resolved;
+    document.getElementById('s-tout').textContent    = global.timedout;
+    document.getElementById('totalBadge').textContent = global.total;
+    document.getElementById('summaryBar').style.display = 'flex';
+
+    // Render cards
+    grid.innerHTML = results.map(({ dept, counts }, i) => {
+      const c = counts || { total:0, pending:0, progress:0, successful:0, resolved:0, timedout:0 };
+      const resolvedRate = c.total > 0 ? Math.round(((c.resolved + c.successful) / c.total) * 100) : 0;
+      const delay = (i * 0.04).toFixed(2);
+
+      return `
+      <article class="card" style="animation-delay:${delay}s;">
+        <div class="card-hdr">
+          <div class="card-title">
+            <span style="font-size:20px;">${dept.emoji}</span>
+            <span style="color:${dept.color};">${dept.label}</span>
+          </div>
+          <span class="active-pill">Active</span>
+        </div>
+        <div class="card-sub">${dept.sub}</div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-val sv-total">${c.total}</div>
+            <div class="stat-lbl">Total</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val sv-pending">${c.pending}</div>
+            <div class="stat-lbl">Pending</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val sv-prog">${c.progress}</div>
+            <div class="stat-lbl">In Progress</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val sv-succ">${c.successful}</div>
+            <div class="stat-lbl">Successful</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val sv-res">${c.resolved}</div>
+            <div class="stat-lbl">Resolved</div>
+          </div>
+          <div class="stat-box" style="background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.14);">
+            <div class="stat-val sv-tout">${c.timedout}</div>
+            <div class="stat-lbl" style="color:#ef4444;">Timed Out</div>
+          </div>
+        </div>
+
+        <div class="pbar">
+          <div class="pfill" style="--p:${resolvedRate}%; background:${dept.color};"></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+          <span style="font-size:11px; color:var(--muted); font-weight:600;">${resolvedRate}% resolved</span>
+        </div>
+      </article>`;
+    }).join('');
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<div class="state-box"><p style="color:var(--danger);">⚠ Failed to load: ${err.message}</p></div>`;
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadAll);
+loadAll();
+</script>
+</body>
+</html>

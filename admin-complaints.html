@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | All Complaints</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6;
+    --muted: rgba(232,234,246,0.45);
+    --ink: #0a0f1e;
+    --sidebar-w: 240px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0f1e;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: rgba(255,255,255,0.025);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    flex-shrink: 0;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 100;
+    backdrop-filter: blur(18px);
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 22px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(79,110,247,0.35);
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+  .nav-wrap { flex: 1; padding: 18px 12px 0; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    text-decoration: none; color: var(--muted);
+    font-size: 13.5px; margin-bottom: 4px;
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active {
+    background: rgba(79,110,247,0.2);
+    border-color: rgba(79,110,247,0.2);
+    color: var(--text);
+  }
+  .nav-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+  }
+
+  .sidebar-bottom {
+    padding: 16px 12px 0;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+  }
+  .user-chip:hover { background: var(--surface); }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800;
+    color: white; display: flex; align-items: center; justify-content: center;
+  }
+  .u-name { font-size: 13px; font-weight: 600; }
+  .u-role { font-size: 11px; color: var(--muted); }
+
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    padding: 20px 36px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    background: rgba(10,15,30,0.65);
+    backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 40;
+  }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar > div:first-child p { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: none; font-family: 'DM Sans', sans-serif;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.14); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 16px rgba(79,110,247,0.32);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(79,110,247,0.42); }
+
+  .content { padding: 28px 36px 40px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .filter-block { margin-bottom: 20px; }
+  .filter-row {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap; margin-bottom: 12px;
+  }
+
+  .search-wrap { position: relative; flex: 1; min-width: 240px; }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  .search-inp {
+    width: 100%; padding: 10px 12px 10px 38px;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+    outline: none; transition: border-color 0.2s, background 0.2s;
+  }
+  .search-inp:focus {
+    border-color: rgba(79,110,247,0.45);
+    background: rgba(79,110,247,0.06);
+    box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  }
+
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+    color: var(--muted); background: transparent; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .tab:hover { background: var(--surface); color: var(--text); }
+  .tab.active {
+    background: rgba(79,110,247,0.14);
+    border-color: rgba(79,110,247,0.26);
+    color: var(--text);
+  }
+
+  /* Timed Out tab special styling */
+  .tab[data-st="timedout"] { color: rgba(239,68,68,0.65); }
+  .tab[data-st="timedout"]:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
+  .tab[data-st="timedout"].active {
+    background: rgba(239,68,68,0.14);
+    border-color: rgba(239,68,68,0.30);
+    color: #ef4444;
+  }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 7px 13px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    color: var(--muted); background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .chip:hover { background: var(--surface); color: var(--text); }
+  .chip.active {
+    background: rgba(124,58,237,0.12);
+    border-color: rgba(124,58,237,0.35);
+    color: var(--text);
+  }
+
+  .table-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  thead tr { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+  th {
+    text-align: left; padding: 14px 18px; font-size: 11px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
+  .id-cell { font-family: ui-monospace, monospace; color: var(--muted); font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Timed-out row highlight */
+  tbody tr.row-timedout { background: rgba(239,68,68,0.04); }
+  tbody tr.row-timedout:hover { background: rgba(239,68,68,0.08); }
+
+  .pill-s { font-size: 11.5px; font-weight: 600; padding: 5px 11px; border-radius: 20px; display: inline-block; }
+  .pill-student { background: rgba(79,110,247,0.12); color: var(--accent); border: 1px solid rgba(79,110,247,0.22); }
+  .pill-faculty { background: rgba(124,58,237,0.12); color: var(--accent2); border: 1px solid rgba(124,58,237,0.22); }
+
+  .pill-st-pen { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.22); }
+  .pill-st-pro { background: rgba(59,130,246,0.12); color: var(--info); border: 1px solid rgba(59,130,246,0.22); }
+  .pill-st-res { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.22); }
+  .pill-st-suc { background: rgba(20,184,166,0.12); color: #14b8a6; border: 1px solid rgba(20,184,166,0.22); }
+
+  .cat-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 600;
+  }
+
+  .view-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; transition: background 0.18s, border-color 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .view-btn:hover { background: rgba(79,110,247,0.14); border-color: rgba(79,110,247,0.35); }
+
+  /* Loading & empty states */
+  .state-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 64px 24px; gap: 14px; color: var(--muted);
+  }
+  .spinner {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 3px solid rgba(79,110,247,0.15);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  .state-box p { font-size: 14px; }
+
+  /* Countdown styles */
+  .countdown-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+  .countdown-green {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.28);
+    color: #10b981;
+  }
+  .countdown-yellow {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.28);
+    color: #f59e0b;
+  }
+  .countdown-red {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.28);
+    color: #ef4444;
+    animation: pulse-red 1.5s ease-in-out infinite;
+  }
+  .countdown-overdue {
+    background: rgba(239,68,68,0.18);
+    border: 1px solid rgba(239,68,68,0.45);
+    color: #ef4444;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  .countdown-none {
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .countdown-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; flex-shrink: 0;
+  }
+  .dot-green { background: #10b981; }
+  .dot-yellow { background: #f59e0b; }
+  .dot-red { background: #ef4444; }
+
+  /* Modal */
+  .overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; padding: 22px;
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: #131929; border: 1px solid var(--border);
+    border-radius: 20px; width: 100%; max-width: 520px;
+    max-height: 90vh; overflow: auto;
+    box-shadow: 0 42px 90px rgba(0,0,0,0.55);
+    animation: fadeUp 0.28s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .mh {
+    padding: 22px 22px 0;
+    display: flex; gap: 14px; align-items: flex-start; justify-content: space-between;
+  }
+  .mh-left { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+  .m-ico {
+    width: 50px; height: 50px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .mh h2 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; line-height: 1.25; margin-bottom: 4px; }
+  .mh .mid { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+
+  .x-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .x-btn:hover { color: var(--text); }
+
+  .md-hr { height: 1px; background: var(--border); margin: 18px 0 0; }
+  .mb { padding: 18px 22px 22px; }
+
+  .grid2 {
+    display: grid; grid-template-columns: 120px 1fr;
+    gap: 10px 12px; font-size: 13px; margin-bottom: 14px;
+  }
+  .grid2 dt { color: var(--muted); font-weight: 500; padding-top: 2px; }
+  .grid2 dd { color: var(--text); line-height: 1.45; word-break: break-word; }
+
+  .desc-box {
+    border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+    border-radius: 12px; padding: 12px 14px;
+    color: var(--muted); font-size: 13px; line-height: 1.55; margin-bottom: 16px;
+  }
+
+  .mf { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  select.sel {
+    flex: 1; min-width: 170px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  }
+  select.sel option { background: #131929; color: var(--text); }
+
+  .btn-up {
+    padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 6px 18px rgba(79,110,247,0.28);
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .btn-up:hover { transform: translateY(-1px); }
+  .btn-up:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    padding: 12px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; color: white;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok { background: linear-gradient(135deg, #10b981, #059669); }
+  .toast.err { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+  .priority-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  }
+  .priority-high { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.22); }
+  .priority-medium { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.22); }
+  .priority-low { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.22); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" aria-label="Admin navigation">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <a class="nav-item" href="admin-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item active" href="admin-complaints.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Complaints
+      <span class="nav-badge" id="totalBadge">…</span>
+    </a>
+    <a class="nav-item" href="admin-feedbacks.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Feedbacks
+    </a>
+    <a class="nav-item" href="admin-departments.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+      Departments
+    </a>
+    <a class="nav-item" href="admin-register.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Register Users
+    </a>
+    <a class="nav-item" href="admin-notifications.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="admin-login.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">AD</div>
+      <div>
+        <div class="u-name">Admin User</div>
+        <div class="u-role">System Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div>
+      <h1>All Complaints</h1>
+      <p>Live data from all department tables</p>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-ghost" id="refreshBtn">↺ Refresh</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="filter-block">
+      <div class="filter-row">
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-inp" id="q" type="search" placeholder="Search by title, email, department…" autocomplete="off" aria-label="Search complaints">
+        </div>
+        <div class="tabs" role="tablist" id="statusTabs">
+          <button type="button" class="tab active" data-st="all">All <span id="cnt-all">(0)</span></button>
+          <button type="button" class="tab" data-st="pending">Pending <span id="cnt-pending">(0)</span></button>
+          <button type="button" class="tab" data-st="progress">In Progress <span id="cnt-progress">(0)</span></button>
+          <button type="button" class="tab" data-st="successful">Successful <span id="cnt-successful">(0)</span></button>
+          <button type="button" class="tab" data-st="resolved">Resolved <span id="cnt-resolved">(0)</span></button>
+          <button type="button" class="tab" data-st="timedout">⏰ Timed Out <span id="cnt-timedout">(0)</span></button>
+        </div>
+      </div>
+      <div class="filter-row" style="margin-bottom:0;">
+        <span style="font-size:11px; color:var(--muted); letter-spacing:.6px; text-transform:uppercase; font-weight:600;">Source</span>
+        <div class="chips">
+          <button type="button" class="chip active" data-src="all">All Users</button>
+          <button type="button" class="chip" data-src="student">Students</button>
+          <button type="button" class="chip" data-src="faculty">Faculty</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div id="loadingState" class="state-box">
+        <div class="spinner"></div>
+        <p>Loading complaints from all departments…</p>
+      </div>
+      <div id="errorState" class="state-box" style="display:none;">
+        <p style="color:var(--danger);">⚠ Failed to load complaints. Check Supabase config.</p>
+        <p id="errMsg" style="font-size:12px;"></p>
+      </div>
+      <div id="emptyState" class="state-box" style="display:none;">
+        <p>No complaints match your filters.</p>
+      </div>
+      <div class="table-scroll" id="tableWrap" style="display:none;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>ID</th><th>Source</th><th>Department</th><th>Title</th><th>Email</th><th>Priority</th><th>Deadline</th><th>⏱ Time Remaining</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="ovl" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" onclick="event.stopPropagation()">
+    <div class="mh">
+      <div class="mh-left">
+        <div class="m-ico" id="mIco">📋</div>
+        <div style="min-width:0;">
+          <div class="mid" id="mIdLine">Complaint · #—</div>
+          <h2 id="mtitle">—</h2>
+        </div>
+      </div>
+      <button type="button" class="x-btn" id="xBtn" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="md-hr"></div>
+    <div class="mb">
+      <dl class="grid2">
+        <dt>ID</dt><dd id="m_id" style="font-family:monospace; font-size:11px; word-break:break-all;"></dd>
+        <dt>Source</dt><dd id="m_src"></dd>
+        <dt>Department</dt><dd id="m_dept"></dd>
+        <dt>Email</dt><dd id="m_by"></dd>
+        <dt>Roll / Emp ID</dt><dd id="m_rollid"></dd>
+        <dt>Priority</dt><dd id="m_priority"></dd>
+        <dt>Deadline</dt><dd id="m_dt"></dd>
+        <dt>Time Left</dt><dd id="m_countdown">—</dd>
+        <dt>Status</dt><dd id="m_statuslabel"></dd>
+      </dl>
+      <div class="desc-box" id="m_desc">No description provided.</div>
+      <div class="mf">
+        <select class="sel" id="m_sel" aria-label="Update status">
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="successful">Successful</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <button type="button" class="btn-up" id="m_upd">Update Status</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://nxufdvaffsygzutcztzr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+// ─────────────────────────────────────────────────────────────────────────────
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const DEPT_TABLES = [
+  { table: 'electricity_complaints', label: 'Electricity', emoji: '⚡', color: 'rgba(251,191,36,0.14)', textColor: '#fbbf24' },
+  { table: 'exam_complaints',        label: 'Exam',        emoji: '📝', color: 'rgba(124,58,237,0.14)', textColor: '#7c3aed' },
+  { table: 'water_complaints',       label: 'Water',       emoji: '💧', color: 'rgba(16,185,129,0.14)', textColor: '#10b981' },
+  { table: 'student_affairs_complaints', label: 'Student Affairs', emoji: '🎓', color: 'rgba(79,110,247,0.14)', textColor: '#4f6ef7' },
+  { table: 'transport_complaints',   label: 'Transport',   emoji: '🚌', color: 'rgba(245,158,11,0.14)', textColor: '#f59e0b' },
+  { table: 'hostel_complaints',      label: 'Hostel',      emoji: '🏠', color: 'rgba(236,72,153,0.14)', textColor: '#ec4899' },
+  { table: 'finance_complaints',     label: 'Finance',     emoji: '💰', color: 'rgba(20,184,166,0.14)', textColor: '#14b8a6' },
+  { table: 'library_complaints',     label: 'Library',     emoji: '📚', color: 'rgba(99,102,241,0.14)', textColor: '#6366f1' },
+  { table: 'security_complaints',    label: 'Security',    emoji: '🔒', color: 'rgba(239,68,68,0.14)',  textColor: '#ef4444' },
+  { table: 'academic_complaints',    label: 'Academic',    emoji: '🎒', color: 'rgba(168,85,247,0.14)', textColor: '#a855f7' },
+  { table: 'building_complaints',    label: 'Building',    emoji: '🏗️', color: 'rgba(59,130,246,0.14)', textColor: '#3b82f6' },
+  { table: 'network_complaints',     label: 'Network',     emoji: '🌐', color: 'rgba(59,130,246,0.14)', textColor: '#3b82f6' },
+];
+
+function normaliseStatus(raw) {
+  if (!raw) return 'pending';
+  const s = raw.toLowerCase().replace(/[\s_-]/g, '');
+  if (s === 'resolved' || s === 'markedresolved') return 'resolved';
+  if (s === 'successful' || s === 'success') return 'successful';
+  if (s === 'inprogress' || s === 'progress') return 'progress';
+  return 'pending';
+}
+
+const STATUS_LABELS  = { pending: 'Pending', progress: 'In Progress', successful: 'Successful', resolved: 'Resolved' };
+const STATUS_CLASSES = { pending: 'pill-st-pen', progress: 'pill-st-pro', successful: 'pill-st-suc', resolved: 'pill-st-res' };
+
+let allComplaints = [];
+let stSel  = 'all';
+let srcSel = 'all';
+let openComplaint = null;
+
+// ── Countdown Engine ──────────────────────────────────────────────────────────
+function parseDuration(str) {
+  if (!str) return null;
+  const s = str.trim().toLowerCase();
+  const match = s.match(/^(\d+(?:\.\d+)?)\s*(second|minute|hour|day|week|month)s?$/);
+  if (!match) return null;
+  const num  = parseFloat(match[1]);
+  const unit = match[2];
+  const map  = { second: 1000, minute: 60000, hour: 3600000, day: 86400000, week: 604800000, month: 2592000000 };
+  return num * (map[unit] || 0);
+}
+
+function getDeadlineMs(updatedAtStr, timeDurationStr) {
+  if (!timeDurationStr || !updatedAtStr) return null;
+  const durMs = parseDuration(timeDurationStr);
+  if (!durMs) return null;
+  const base = new Date(updatedAtStr);
+  if (isNaN(base.getTime())) return null;
+  return base.getTime() + durMs;
+}
+
+function isTimedOut(complaint) {
+  const d = getDeadlineMs(complaint.updatedAt, complaint.timeDuration);
+  return !!(d && d < Date.now());
+}
+
+function formatCountdown(remainingMs) {
+  if (remainingMs <= 0) return { text: 'Time Out', state: 'overdue' };
+  const totalSec   = Math.floor(remainingMs / 1000);
+  const totalHours = Math.floor(totalSec / 3600);
+  const mins       = Math.floor((totalSec % 3600) / 60);
+  const secs       = totalSec % 60;
+  const pad = n => String(n).padStart(2, '0');
+  const text = `${pad(totalHours)}:${pad(mins)}:${pad(secs)}`;
+  let state;
+  if      (remainingMs <= 3600000)  state = 'red';
+  else if (remainingMs <= 86400000) state = 'yellow';
+  else                              state = 'green';
+  return { text, state };
+}
+
+function buildCountdownHTML(complaint) {
+  if (complaint.statusNorm === 'resolved' || complaint.statusNorm === 'successful') {
+    return `<span class="countdown-cell countdown-none">— Closed</span>`;
+  }
+  const deadlineMs = getDeadlineMs(complaint.updatedAt, complaint.timeDuration);
+  if (!deadlineMs) return `<span class="countdown-cell countdown-none">— No deadline</span>`;
+  const remaining = deadlineMs - Date.now();
+  const { text, state } = formatCountdown(remaining);
+  if (state === 'overdue') {
+    return `<span class="countdown-cell countdown-overdue" data-deadline="${deadlineMs}">⏰ Time Out</span>`;
+  }
+  const dotClass  = state === 'green' ? 'dot-green'  : state === 'yellow' ? 'dot-yellow'  : 'dot-red';
+  const cellClass = state === 'green' ? 'countdown-green' : state === 'yellow' ? 'countdown-yellow' : 'countdown-red';
+  return `<span class="countdown-cell ${cellClass}" data-deadline="${deadlineMs}"><span class="countdown-dot ${dotClass}"></span>${text}</span>`;
+}
+
+let tickerInterval = null;
+function startTicker() {
+  if (tickerInterval) clearInterval(tickerInterval);
+  tickerInterval = setInterval(() => {
+    document.querySelectorAll('[data-deadline]').forEach(el => {
+      const deadlineMs = parseInt(el.getAttribute('data-deadline'), 10);
+      if (!deadlineMs) return;
+
+      // If the complaint is now resolved/successful, clear the countdown immediately
+      const row = el.closest('tr');
+      if (row) {
+        const viewBtn = row.querySelector('.view-btn');
+        if (viewBtn) {
+          const id = viewBtn.getAttribute('data-id');
+          const c  = allComplaints.find(x => x.id === id);
+          if (c && (c.statusNorm === 'resolved' || c.statusNorm === 'successful')) {
+            el.className   = 'countdown-cell countdown-none';
+            el.textContent = '— Closed';
+            el.removeAttribute('data-deadline');
+            return;
+          }
+        }
+      }
+
+      const remaining = deadlineMs - Date.now();
+      const { text, state } = formatCountdown(remaining);
+      if (state === 'overdue') {
+        el.className   = 'countdown-cell countdown-overdue';
+        el.textContent = '⏰ Time Out';
+      } else {
+        const dotClass  = state === 'green' ? 'dot-green'  : state === 'yellow' ? 'dot-yellow'  : 'dot-red';
+        const cellClass = state === 'green' ? 'countdown-green' : state === 'yellow' ? 'countdown-yellow' : 'countdown-red';
+        el.className = `countdown-cell ${cellClass}`;
+        el.innerHTML = `<span class="countdown-dot ${dotClass}"></span>${text}`;
+      }
+    });
+    // Re-sync timedout count every tick (deadlines flip in real-time)
+    updateCounts();
+  }, 1000);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast ' + (type || 'ok');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── Fetch all departments ─────────────────────────────────────────────────────
+async function loadComplaints() {
+  document.getElementById('loadingState').style.display = 'flex';
+  document.getElementById('errorState').style.display   = 'none';
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('tableWrap').style.display    = 'none';
+
+  try {
+    const { data: statusRows, error: statusErr } = await sb
+      .from('complaint_status')
+      .select('complaint_id, complaint_table, status, time_duration, updated_at, message, user_email');
+
+    if (statusErr) throw statusErr;
+
+    const statusMap = {};
+    (statusRows || []).forEach(r => { statusMap[r.complaint_id] = r; });
+
+    const fetches = DEPT_TABLES.map(async (dept) => {
+      const { data, error } = await sb
+        .from(dept.table)
+        .select('id, title, description, email, role, department, priority, date, created_at, roll_number, employee_id, designation, semester, shift, status')
+        .order('created_at', { ascending: false });
+
+      if (error) { console.warn(`Error fetching ${dept.table}:`, error.message); return []; }
+
+      return (data || []).map(row => {
+        const statusRow = statusMap[row.id];
+        const rawStatus = statusRow ? statusRow.status : (row.status || 'pending');
+        return {
+          id:          row.id,
+          table:       dept.table,
+          deptLabel:   dept.label,
+          emoji:       dept.emoji,
+          bg:          dept.color,
+          textColor:   dept.textColor,
+          title:       row.title || '—',
+          description: row.description || '',
+          email:       row.email || '—',
+          role:        (row.role || 'student').toLowerCase(),
+          roleLabel:   row.role ? (row.role.charAt(0).toUpperCase() + row.role.slice(1).toLowerCase()) : 'Student',
+          priority:    row.priority || 'Normal',
+          date:        row.date || (row.created_at ? row.created_at.split('T')[0] : '—'),
+          roll_number: row.roll_number || null,
+          employee_id: row.employee_id || null,
+          designation: row.designation || null,
+          semester:    row.semester || null,
+          shift:       row.shift || null,
+          statusRaw:   rawStatus,
+          statusNorm:  normaliseStatus(rawStatus),
+          timeDuration: statusRow ? (statusRow.time_duration || null) : null,
+          updatedAt:    statusRow ? (statusRow.updated_at    || null) : null,
+        };
+      });
+    });
+
+    const results = await Promise.all(fetches);
+    allComplaints = results.flat();
+    allComplaints.sort((a, b) => (b.date > a.date ? 1 : -1));
+
+    document.getElementById('loadingState').style.display = 'none';
+    renderTable();
+    startTicker();
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display   = 'flex';
+    document.getElementById('errMsg').textContent = err.message || String(err);
+  }
+}
+
+// ── Filtering & Rendering ─────────────────────────────────────────────────────
+function deadlineHTML(td) {
+  if (!td) return '<span style="color:var(--muted);font-size:12px;">— Not set</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.22);color:#f59e0b;font-size:12px;font-weight:600;">⏰ ' + td + '</span>';
+}
+
+function visibleComplaints() {
+  const q = (document.getElementById('q').value || '').trim().toLowerCase();
+  return allComplaints.filter(c => {
+    const okQ = !q ||
+      c.title.toLowerCase().includes(q)       ||
+      c.email.toLowerCase().includes(q)       ||
+      c.deptLabel.toLowerCase().includes(q)   ||
+      c.description.toLowerCase().includes(q);
+
+    let okSt;
+    if (stSel === 'timedout') {
+      okSt = isTimedOut(c);
+    } else {
+      okSt = stSel === 'all' || c.statusNorm === stSel;
+    }
+
+    const okSrc = srcSel === 'all' || c.role === srcSel;
+    return okQ && okSt && okSrc;
+  });
+}
+
+function updateCounts() {
+  const counts = { all: allComplaints.length, pending: 0, progress: 0, successful: 0, resolved: 0, timedout: 0 };
+  allComplaints.forEach(c => {
+    if (counts[c.statusNorm] !== undefined) counts[c.statusNorm]++;
+    if (isTimedOut(c)) counts.timedout++;
+  });
+  document.getElementById('cnt-all').textContent        = `(${counts.all})`;
+  document.getElementById('cnt-pending').textContent    = `(${counts.pending})`;
+  document.getElementById('cnt-progress').textContent   = `(${counts.progress})`;
+  document.getElementById('cnt-successful').textContent = `(${counts.successful})`;
+  document.getElementById('cnt-resolved').textContent   = `(${counts.resolved})`;
+  document.getElementById('cnt-timedout').textContent   = `(${counts.timedout})`;
+  document.getElementById('totalBadge').textContent     = counts.all;
+}
+
+function priorityHTML(p) {
+  const lp = (p || '').toLowerCase();
+  if (lp === 'high')                        return `<span class="priority-chip priority-high">🔴 High</span>`;
+  if (lp === 'medium' || lp === 'normal')   return `<span class="priority-chip priority-medium">🟡 ${p}</span>`;
+  return `<span class="priority-chip priority-low">🟢 ${p || 'Normal'}</span>`;
+}
+
+function renderTable() {
+  updateCounts();
+  const list       = visibleComplaints();
+  const tbody      = document.getElementById('tbody');
+  const tableWrap  = document.getElementById('tableWrap');
+  const emptyState = document.getElementById('emptyState');
+
+  if (list.length === 0) {
+    tableWrap.style.display  = 'none';
+    emptyState.style.display = 'flex';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  tableWrap.style.display  = 'block';
+
+  tbody.innerHTML = list.map(c => {
+    const shortId    = c.id.split('-')[0];
+    const timedOut   = isTimedOut(c);
+    const rowClass   = timedOut ? ' class="row-timedout"' : '';
+    const rolePill   = c.role === 'faculty'
+      ? `<span class="pill-s pill-faculty">Faculty</span>`
+      : `<span class="pill-s pill-student">Student</span>`;
+    const statusPill = `<span class="pill-s ${STATUS_CLASSES[c.statusNorm]}">${STATUS_LABELS[c.statusNorm]}</span>`;
+
+    return `<tr${rowClass}>
+      <td class="id-cell" title="${c.id}">${shortId}…</td>
+      <td>${rolePill}</td>
+      <td><span class="cat-chip" style="background:${c.bg}; color:${c.textColor};">${c.emoji} ${c.deptLabel}</span></td>
+      <td style="font-weight:600; max-width:200px;">${c.title}</td>
+      <td style="color:var(--muted); font-size:13px;">${c.email}</td>
+      <td>${priorityHTML(c.priority)}</td>
+      <td>${deadlineHTML(c.timeDuration)}</td>
+      <td>${buildCountdownHTML(c)}</td>
+      <td>${statusPill}</td>
+      <td><button type="button" class="view-btn" data-id="${c.id}" data-table="${c.table}">View</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      const c  = allComplaints.find(x => x.id === id);
+      if (c) openModal(c);
+    });
+  });
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+const ovl = document.getElementById('ovl');
+
+function openModal(c) {
+  openComplaint = c;
+  document.getElementById('mIco').textContent         = c.emoji;
+  document.getElementById('mIco').style.background    = c.bg;
+  document.getElementById('mIdLine').textContent      = `${c.deptLabel} · ${c.id.split('-')[0]}…`;
+  document.getElementById('mtitle').textContent       = c.title;
+  document.getElementById('m_id').textContent         = c.id;
+  document.getElementById('m_src').textContent        = c.roleLabel;
+  document.getElementById('m_dept').textContent       = c.deptLabel;
+  document.getElementById('m_by').textContent         = c.email;
+  document.getElementById('m_rollid').textContent     = c.role === 'faculty'
+    ? (c.employee_id || '—') + (c.designation ? ` · ${c.designation}` : '')
+    : (c.roll_number || '—') + (c.semester    ? ` · Semester ${c.semester}` : '');
+  document.getElementById('m_priority').innerHTML     = priorityHTML(c.priority);
+  document.getElementById('m_dt').innerHTML           = deadlineHTML(c.timeDuration);
+  document.getElementById('m_countdown').innerHTML    = buildCountdownHTML(c);
+  document.getElementById('m_statuslabel').innerHTML  = `<span class="pill-s ${STATUS_CLASSES[c.statusNorm]}">${STATUS_LABELS[c.statusNorm]}</span>`;
+  document.getElementById('m_desc').textContent       = c.description || 'No description provided.';
+
+  const selValMap = { pending: 'pending', progress: 'in_progress', successful: 'successful', resolved: 'resolved' };
+  document.getElementById('m_sel').value = selValMap[c.statusNorm] || 'pending';
+
+  ovl.classList.add('open');
+  ovl.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  ovl.classList.remove('open');
+  ovl.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  openComplaint = null;
+}
+
+ovl.addEventListener('click', (e) => { if (e.target === ovl) closeModal(); });
+document.getElementById('xBtn').addEventListener('click', closeModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && ovl.classList.contains('open')) closeModal();
+});
+
+// ── Update status ─────────────────────────────────────────────────────────────
+document.getElementById('m_upd').addEventListener('click', async () => {
+  if (!openComplaint) return;
+  const btn    = document.getElementById('m_upd');
+  const selVal = document.getElementById('m_sel').value;
+
+  btn.disabled    = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const { data: existing } = await sb
+      .from('complaint_status')
+      .select('id')
+      .eq('complaint_id', openComplaint.id)
+      .single();
+
+    let result;
+    if (existing) {
+      result = await sb
+        .from('complaint_status')
+        .update({ status: selVal, updated_at: new Date().toISOString() })
+        .eq('complaint_id', openComplaint.id);
+    } else {
+      result = await sb
+        .from('complaint_status')
+        .insert({
+          complaint_id:    openComplaint.id,
+          complaint_table: openComplaint.table,
+          status:          selVal,
+          updated_at:      new Date().toISOString(),
+        });
+    }
+
+    if (result.error) throw result.error;
+
+    const normNew = normaliseStatus(selVal);
+    openComplaint.statusNorm = normNew;
+    openComplaint.statusRaw  = selVal;
+    document.getElementById('m_statuslabel').innerHTML = `<span class="pill-s ${STATUS_CLASSES[normNew]}">${STATUS_LABELS[normNew]}</span>`;
+    renderTable();
+    showToast(`Status updated to "${STATUS_LABELS[normNew]}"`, 'ok');
+    closeModal();
+
+  } catch (err) {
+    console.error(err);
+    showToast('Update failed: ' + (err.message || 'Unknown error'), 'err');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Update Status';
+  }
+});
+
+// ── Filter bindings ───────────────────────────────────────────────────────────
+document.getElementById('q').addEventListener('input', renderTable);
+
+document.querySelectorAll('#statusTabs .tab').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#statusTabs .tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    stSel = b.getAttribute('data-st');
+    renderTable();
+  });
+});
+
+document.querySelectorAll('.chips .chip').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.chips .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    srcSel = b.getAttribute('data-src');
+    renderTable();
+  });
+});
+
+document.getElementById('refreshBtn').addEventListener('click', loadComplaints);
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadComplaints();
+</script>
+</body>
+</html>

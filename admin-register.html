@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Register Users</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #4f6ef7; --accent2: #7c3aed;
+    --success: #10b981; --warning: #f59e0b;
+    --danger: #ef4444; --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6; --muted: rgba(232,234,246,0.45);
+    --ink: #0a0f1e; --sidebar-w: 240px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ink); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; display: flex; }
+
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: rgba(255,255,255,0.025); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; position: fixed; inset: 0 auto 0 0; z-index: 100; backdrop-filter: blur(18px); }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 22px 24px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(79,110,247,0.35); }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; }
+  .logo-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+  .nav-wrap { flex: 1; padding: 18px 12px 0; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-size: 13.5px; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.2s; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: rgba(79,110,247,0.2); border-color: rgba(79,110,247,0.2); color: var(--text); }
+  .nav-badge { margin-left: auto; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .sidebar-bottom { padding: 16px 12px 0; margin-top: auto; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; color: white; display: flex; align-items: center; justify-content: center; }
+  .u-name { font-size: 13px; font-weight: 600; }
+  .u-role { font-size: 11px; color: var(--muted); }
+
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { padding: 20px 36px; border-bottom: 1px solid var(--border); background: rgba(10,15,30,0.65); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 40; }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar p { font-size: 13px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+  .content { padding: 40px 36px 60px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+
+  .hero { text-align: center; margin-bottom: 44px; animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) both; }
+  .hero h2 { font-family: 'Syne', sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(135deg, var(--text) 40%, rgba(232,234,246,0.5)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
+  .hero p { font-size: 15px; color: var(--muted); font-weight: 300; max-width: 480px; margin: 0 auto; line-height: 1.65; }
+
+  .type-selector { display: flex; justify-content: center; gap: 16px; margin-bottom: 40px; animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) 0.1s both; }
+  .type-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 36px; border-radius: 18px; border: 2px solid var(--border); background: rgba(255,255,255,0.03); color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.25s; min-width: 160px; }
+  .type-btn .tb-icon { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,0.05); color: var(--muted); display: flex; align-items: center; justify-content: center; transition: all 0.25s; }
+  .type-btn .tb-icon svg { width: 22px; height: 22px; }
+  .type-btn .tb-label { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .type-btn .tb-sub { font-size: 11.5px; color: var(--muted); font-weight: 300; }
+  .type-btn:hover { border-color: rgba(79,110,247,0.4); color: var(--text); background: rgba(79,110,247,0.06); }
+  .type-btn.active.student { border-color: var(--accent); background: rgba(79,110,247,0.1); color: var(--text); box-shadow: 0 0 0 4px rgba(79,110,247,0.12); }
+  .type-btn.active.student .tb-icon { background: rgba(79,110,247,0.2); color: var(--accent); }
+  .type-btn.active.faculty { border-color: var(--accent2); background: rgba(124,58,237,0.1); color: var(--text); box-shadow: 0 0 0 4px rgba(124,58,237,0.12); }
+  .type-btn.active.faculty .tb-icon { background: rgba(124,58,237,0.2); color: var(--accent2); }
+  .type-btn.active.records { border-color: var(--success); background: rgba(16,185,129,0.1); color: var(--text); box-shadow: 0 0 0 4px rgba(16,185,129,0.12); }
+  .type-btn.active.records .tb-icon { background: rgba(16,185,129,0.2); color: var(--success); }
+  .type-btn.records:hover { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); }
+
+  /* Registration forms */
+  .form-wrap { max-width: 600px; margin: 0 auto; animation: fadeIn 0.35s ease both; }
+  .form-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 32px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); }
+  .form-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .fc-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .fc-icon svg { width: 20px; height: 20px; }
+  .fc-icon.student { background: rgba(79,110,247,0.15); color: var(--accent); }
+  .fc-icon.faculty { background: rgba(124,58,237,0.15); color: var(--accent2); }
+  .fc-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+  .fc-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 7px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .input-wrap { position: relative; }
+  .input-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.22); pointer-events: none; width: 15px; height: 15px; }
+  input, select { width: 100%; padding: 12px 13px 12px 40px; border-radius: 11px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: all 0.22s; -webkit-appearance: none; }
+  input::placeholder { color: rgba(255,255,255,0.2); }
+  input:focus, select:focus { border-color: rgba(79,110,247,0.5); background: rgba(79,110,247,0.07); box-shadow: 0 0 0 3px rgba(79,110,247,0.13); }
+  select option { background: #131929; color: var(--text); }
+
+  .autofill-field { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 11px; border: 1px solid var(--border); background: rgba(255,255,255,0.025); }
+  .autofill-field .af-badge { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px; }
+  .autofill-field .af-badge.student { background: rgba(79,110,247,0.15); color: var(--accent); border: 1px solid rgba(79,110,247,0.25); }
+  .autofill-field .af-badge.faculty { background: rgba(124,58,237,0.15); color: var(--accent2); border: 1px solid rgba(124,58,237,0.25); }
+  .autofill-field .af-label { font-size: 12px; color: var(--muted); }
+  .autofill-field svg { color: var(--success); width: 14px; height: 14px; margin-left: auto; flex-shrink: 0; }
+
+  .save-btn { width: 100%; padding: 14px; margin-top: 8px; border: none; border-radius: 12px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: white; transition: all 0.25s; letter-spacing: 0.3px; }
+  .save-btn.student { background: linear-gradient(135deg, var(--accent), #6366f1); box-shadow: 0 10px 28px rgba(79,110,247,0.3); }
+  .save-btn.student:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(79,110,247,0.42); }
+  .save-btn.faculty { background: linear-gradient(135deg, var(--accent2), #9333ea); box-shadow: 0 10px 28px rgba(124,58,237,0.3); }
+  .save-btn.faculty:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(124,58,237,0.42); }
+  .save-btn:disabled { opacity: 0.6; cursor: wait; transform: none !important; }
+
+  /* Records */
+  .records-wrap { max-width: 1000px; margin: 0 auto; animation: fadeIn 0.35s ease both; }
+  .records-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.25); }
+  .records-header { padding: 22px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .records-header-left { display: flex; align-items: center; gap: 12px; }
+  .rh-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.15); color: var(--success); display: flex; align-items: center; justify-content: center; }
+  .rh-icon svg { width: 18px; height: 18px; }
+  .rh-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; }
+  .rh-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .rec-tabs { display: flex; gap: 6px; }
+  .rec-tab { padding: 7px 14px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .rec-tab:hover { background: var(--surface); color: var(--text); }
+  .rec-tab.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: var(--success); }
+  .rec-search-wrap { position: relative; min-width: 200px; }
+  .rec-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; width: 14px; height: 14px; }
+  .rec-search { width: 100%; padding: 9px 12px 9px 34px; border-radius: 9px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: all 0.2s; }
+  .rec-search:focus { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+  .records-scroll { overflow-x: auto; }
+  .records-table { width: 100%; border-collapse: collapse; min-width: 780px; }
+  .records-table thead tr { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+  .records-table th { padding: 13px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; }
+  .records-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .records-table tbody tr:last-child { border-bottom: none; }
+  .records-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .records-table td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+  .role-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-block; white-space: nowrap; }
+  .role-student { background: rgba(79,110,247,0.12); color: var(--accent); border: 1px solid rgba(79,110,247,0.22); }
+  .role-faculty { background: rgba(124,58,237,0.12); color: var(--accent2); border: 1px solid rgba(124,58,237,0.22); }
+  .rec-skel { background: linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.06) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; display:inline-block; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .rec-empty { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 13px; }
+
+  /* Action buttons in table */
+  .action-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; border: 1px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; background: transparent; }
+  .action-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .btn-edit { color: var(--accent); border-color: rgba(79,110,247,0.25); background: rgba(79,110,247,0.08); }
+  .btn-edit:hover { background: rgba(79,110,247,0.18); border-color: rgba(79,110,247,0.5); }
+  .btn-delete { color: var(--danger); border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
+  .btn-delete:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.5); }
+  .btn-save-row { color: var(--success); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1); }
+  .btn-save-row:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.55); }
+  .btn-cancel-row { color: var(--muted); border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+  .btn-cancel-row:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* Inline edit inputs */
+  .edit-input { padding: 5px 9px 5px 9px; border-radius: 7px; border: 1px solid rgba(79,110,247,0.4); background: rgba(79,110,247,0.08); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12.5px; outline: none; width: 100%; min-width: 80px; }
+  .edit-select { padding: 5px 9px; border-radius: 7px; border: 1px solid rgba(79,110,247,0.4); background: rgba(20,26,50,0.95); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12.5px; outline: none; width: 100%; }
+  .edit-select option { background: #131929; }
+
+  /* Delete confirm modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box { background: #111827; border: 1px solid rgba(239,68,68,0.25); border-radius: 20px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 30px 80px rgba(0,0,0,0.6); transform: scale(0.94); transition: transform 0.22s; }
+  .modal-overlay.show .modal-box { transform: scale(1); }
+  .modal-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(239,68,68,0.15); color: var(--danger); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .modal-icon svg { width: 24px; height: 24px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+  .modal-body { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+  .modal-body strong { color: var(--text); }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-cancel { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.18s; }
+  .modal-cancel:hover { background: rgba(255,255,255,0.1); }
+  .modal-confirm { flex: 1; padding: 11px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--danger), #dc2626); color: white; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.18s; box-shadow: 0 8px 20px rgba(239,68,68,0.3); }
+  .modal-confirm:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(239,68,68,0.4); }
+  .modal-confirm:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 28px; right: 28px; z-index: 999; padding: 13px 22px; border-radius: 12px; font-size: 13px; font-weight: 600; color: white; box-shadow: 0 8px 28px rgba(0,0,0,0.4); opacity: 0; transform: translateY(12px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok  { background: linear-gradient(135deg, #10b981, #059669); }
+  .toast.err { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-sub">Admin Portal</div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <a class="nav-item" href="admin-dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+    </a>
+    <a class="nav-item" href="admin-complaints.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Complaints
+    </a>
+    <a class="nav-item" href="admin-feedbacks.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Feedbacks
+    </a>
+    <a class="nav-item" href="admin-departments.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>Departments
+    </a>
+    <a class="nav-item active" href="admin-register.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Register Users
+    </a>
+    <a class="nav-item" href="admin-notifications.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications<span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar" id="adminAvatar">AD</div>
+      <div>
+        <div class="u-name" id="adminName">Admin User</div>
+        <div class="u-role">System Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <h1>Register Users</h1>
+    <p>Add new students and faculty members to the DigiSolutions system</p>
+  </header>
+  <main class="content">
+
+    <div class="hero">
+      <h2>Register New Users</h2>
+      <p>Onboard students and faculty members securely. Each registered user gains access to the complaint management portal with their designated role and permissions.</p>
+    </div>
+
+    <div class="type-selector">
+      <button class="type-btn student active" id="btnStudent" onclick="switchType('student')">
+        <div class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+        <div class="tb-label">Student</div><div class="tb-sub">Enroll a new student</div>
+      </button>
+      <button class="type-btn faculty" id="btnFaculty" onclick="switchType('faculty')">
+        <div class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="tb-label">Faculty</div><div class="tb-sub">Add a faculty member</div>
+      </button>
+      <button class="type-btn records" id="btnRecords" onclick="switchType('records')">
+        <div class="tb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="tb-label">Records</div><div class="tb-sub">View registered users</div>
+      </button>
+    </div>
+
+    <!-- Student Form -->
+    <div class="form-wrap" id="studentForm">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="fc-icon student"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+          <div><div class="fc-title">Student Registration</div><div class="fc-sub">Fill in the details below to register a new student</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Full Name</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" id="s_name" placeholder="e.g. Ali Hassan"></div></div>
+          <div class="field"><label>Email Address</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg><input type="email" id="s_email" placeholder="student@university.com"></div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Session / Batch</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><input type="text" id="s_session" placeholder="e.g. 2022–2026"></div></div>
+          <div class="field"><label>Department</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+            <select id="s_dept"><option value="">Select department…</option><option>Computer Science</option><option>Electrical Engineering</option><option>Mechanical Engineering</option><option>Business Administration</option><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Civil Engineering</option><option>Software Engineering</option><option>Information Technology</option></select>
+          </div></div>
+        </div>
+        <div class="field"><label>Role <span style="color:var(--success);font-size:10px;margin-left:6px;">● Auto-filled</span></label>
+          <div class="autofill-field"><span class="af-badge student">Student</span><span class="af-label">Automatically assigned — cannot be changed</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+        <button class="save-btn student" id="saveStudent" onclick="saveUser('student')">Save Student →</button>
+      </div>
+    </div>
+
+    <!-- Faculty Form -->
+    <div class="form-wrap hidden" id="facultyForm">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="fc-icon faculty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div><div class="fc-title">Faculty Registration</div><div class="fc-sub">Fill in the details below to register a new faculty member</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Full Name</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" id="f_name" placeholder="e.g. Dr. Sara Malik"></div></div>
+          <div class="field"><label>Email Address</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg><input type="email" id="f_email" placeholder="faculty@university.com"></div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Employee ID</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><input type="text" id="f_empid" placeholder="e.g. FAC-2024-042"></div></div>
+          <div class="field"><label>Faculty Type</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+            <select id="f_type"><option value="">Select type…</option><option>Professor</option><option>Associate Professor</option><option>Assistant Professor</option><option>Lecturer</option><option>HOD</option><option>Lab Engineer</option><option>Visiting Faculty</option><option>Staff</option><option>Guard</option></select>
+          </div></div>
+        </div>
+        <div class="field"><label>Role <span style="color:var(--success);font-size:10px;margin-left:6px;">● Auto-filled</span></label>
+          <div class="autofill-field"><span class="af-badge faculty">Faculty</span><span class="af-label">Automatically assigned — cannot be changed</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+        <button class="save-btn faculty" id="saveFaculty" onclick="saveUser('faculty')">Save Faculty →</button>
+      </div>
+    </div>
+
+    <!-- Records Panel -->
+    <div class="records-wrap hidden" id="recordsPanel">
+      <div class="records-card">
+        <div class="records-header">
+          <div class="records-header-left">
+            <div class="rh-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <div><div class="rh-title">Registered Users</div><div class="rh-sub" id="recSubtitle">Loading…</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="rec-tabs">
+              <button class="rec-tab active" data-role="all">All</button>
+              <button class="rec-tab" data-role="Student">Students</button>
+              <button class="rec-tab" data-role="Faculty">Faculty</button>
+            </div>
+            <div class="rec-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="rec-search" id="recSearch" type="search" placeholder="Search users…">
+            </div>
+          </div>
+        </div>
+        <div class="records-scroll">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Role</th><th>Dept / Type</th><th>Session / Emp ID</th><th>Registered</th><th style="text-align:center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recTableBody">
+              <tr><td colspan="7" style="padding:20px 18px;"><span class="rec-skel" style="width:100%;height:14px;display:block;"></span></td></tr>
+              <tr><td colspan="7" style="padding:20px 18px;"><span class="rec-skel" style="width:75%;height:14px;display:block;"></span></td></tr>
+              <tr><td colspan="7" style="padding:20px 18px;"><span class="rec-skel" style="width:85%;height:14px;display:block;"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+    <div class="modal-title">Delete User?</div>
+    <div class="modal-body">You are about to permanently delete <strong id="modalUserName">—</strong>. This action <strong>cannot be undone</strong> and will remove all associated data from the database.</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="modal-confirm" id="modalConfirmBtn" onclick="confirmDelete()">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL      = 'https://nxufdvaffsygzutcztzr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const TABLE = 'registered_users';
+
+  const adminEmail = localStorage.getItem('adminEmail') || 'admin@digisolutions.com';
+  document.getElementById('adminAvatar').textContent = adminEmail.substring(0,2).toUpperCase();
+  document.getElementById('adminName').textContent   = adminEmail.split('@')[0];
+
+  let allUsers      = [];
+  let recRoleFilter = 'all';
+  let recordsLoaded = false;
+  let pendingDeleteId = null;
+  let editingId       = null;
+
+  // ── Tab switching ────────────────────────────────────────────────────────────
+  function switchType(type) {
+    ['student','faculty','records'].forEach(t => {
+      document.getElementById('btn' + t.charAt(0).toUpperCase() + t.slice(1))
+        .classList.toggle('active', t === type);
+    });
+    document.getElementById('studentForm').classList.toggle('hidden',  type !== 'student');
+    document.getElementById('facultyForm').classList.toggle('hidden',  type !== 'faculty');
+    document.getElementById('recordsPanel').classList.toggle('hidden', type !== 'records');
+    if (type === 'records' && !recordsLoaded) loadRecords();
+  }
+
+  // ── Load records ─────────────────────────────────────────────────────────────
+  async function loadRecords() {
+    recordsLoaded = true;
+    const { data, error } = await sb.from(TABLE).select('*').order('created_at', { ascending: false });
+    if (error) {
+      document.getElementById('recTableBody').innerHTML =
+        '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--danger);">Failed to load: ' + error.message + '</td></tr>';
+      return;
+    }
+    allUsers = data || [];
+    updateRecSubtitle();
+    renderRecords();
+  }
+
+  function updateRecSubtitle() {
+    const s = allUsers.filter(u => (u.role||'').toLowerCase() === 'student').length;
+    const f = allUsers.filter(u => (u.role||'').toLowerCase() === 'faculty').length;
+    document.getElementById('recSubtitle').textContent = allUsers.length + ' total — ' + s + ' students, ' + f + ' faculty';
+  }
+
+  function timeAgo(d) {
+    if (!d) return '—';
+    const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+    if (days < 1) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return days + 'd ago';
+    return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Render table ─────────────────────────────────────────────────────────────
+  function renderRecords() {
+    const q = (document.getElementById('recSearch').value||'').toLowerCase().trim();
+    const filtered = allUsers.filter(u => {
+      const role = (u.role||'').toLowerCase();
+      const matchRole = recRoleFilter==='all' ||
+        (recRoleFilter==='Student' && role==='student') ||
+        (recRoleFilter==='Faculty' && role==='faculty');
+      const matchQ = !q ||
+        (u.name||'').toLowerCase().includes(q) ||
+        (u.email||'').toLowerCase().includes(q) ||
+        (u.department||'').toLowerCase().includes(q) ||
+        (u.faculty_type||'').toLowerCase().includes(q) ||
+        (u.role||'').toLowerCase().includes(q);
+      return matchRole && matchQ;
+    });
+
+    const tbody = document.getElementById('recTableBody');
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="rec-empty">No users found.</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => buildRow(u)).join('');
+  }
+
+  const deptOptions = ['Computer Science','Electrical Engineering','Mechanical Engineering','Business Administration','Mathematics','Physics','Chemistry','Civil Engineering','Software Engineering','Information Technology'];
+  const typeOptions = ['Professor','Associate Professor','Assistant Professor','Lecturer','HOD','Lab Engineer','Visiting Faculty','Staff','Guard'];
+
+  function buildRow(u) {
+    const isStudent = (u.role||'').toLowerCase() === 'student';
+    const roleClass = isStudent ? 'role-student' : 'role-faculty';
+    const roleLabel = isStudent ? 'Student' : 'Faculty';
+    const deptOrType  = isStudent ? (u.department||'—') : (u.faculty_type||'—');
+    const sessionOrId = isStudent ? (u.session||'—') : (u.employee_id||'—');
+
+    if (editingId === u.id) {
+      // ── Edit row ──────────────────────────────────────────────────────────
+      const deptSel = isStudent
+        ? '<select class="edit-select" id="edit_dept">' + deptOptions.map(o=>'<option'+(u.department===o?' selected':'')+'>'+o+'</option>').join('') + '</select>'
+        : '<select class="edit-select" id="edit_ftype">' + typeOptions.map(o=>'<option'+(u.faculty_type===o?' selected':'')+'>'+o+'</option>').join('') + '</select>';
+      const sessionOrIdInput = isStudent
+        ? '<input class="edit-input" id="edit_session" value="'+esc(u.session||'')+'" placeholder="Session">'
+        : '<input class="edit-input" id="edit_empid" value="'+esc(u.employee_id||'')+'" placeholder="Emp ID">';
+
+      return '<tr style="background:rgba(79,110,247,0.05);border-left:2px solid var(--accent);">' +
+        '<td><input class="edit-input" id="edit_name" value="'+esc(u.name||'')+'" placeholder="Full Name"></td>' +
+        '<td><input class="edit-input" id="edit_email" value="'+esc(u.email||'')+'" placeholder="Email"></td>' +
+        '<td><span class="role-pill '+roleClass+'">'+roleLabel+'</span></td>' +
+        '<td>'+deptSel+'</td>' +
+        '<td>'+sessionOrIdInput+'</td>' +
+        '<td style="color:var(--muted);font-size:12px;">'+timeAgo(u.created_at)+'</td>' +
+        '<td style="text-align:center;white-space:nowrap;">' +
+          '<button class="action-btn btn-save-row" onclick="saveEdit(\''+u.id+'\',\''+u.role+'\')">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Save' +
+          '</button>&nbsp;' +
+          '<button class="action-btn btn-cancel-row" onclick="cancelEdit()">Cancel</button>' +
+        '</td></tr>';
+    }
+
+    // ── View row ──────────────────────────────────────────────────────────────
+    return '<tr>' +
+      '<td style="font-weight:600;">'+esc(u.name||'—')+'</td>' +
+      '<td style="color:var(--muted);font-size:12.5px;">'+esc(u.email||'—')+'</td>' +
+      '<td><span class="role-pill '+roleClass+'">'+roleLabel+'</span></td>' +
+      '<td style="font-size:12.5px;">'+esc(deptOrType)+'</td>' +
+      '<td style="color:var(--muted);font-size:12.5px;font-family:monospace;">'+esc(sessionOrId)+'</td>' +
+      '<td style="color:var(--muted);font-size:12px;">'+timeAgo(u.created_at)+'</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' +
+        '<button class="action-btn btn-edit" onclick="startEdit(\''+u.id+'\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit' +
+        '</button>&nbsp;' +
+        '<button class="action-btn btn-delete" onclick="openDeleteModal(\''+u.id+'\',\''+esc(u.name||'this user')+'\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete' +
+        '</button>' +
+      '</td></tr>';
+  }
+
+  // ── Edit helpers ─────────────────────────────────────────────────────────────
+  function startEdit(id) {
+    editingId = id;
+    renderRecords();
+  }
+  function cancelEdit() {
+    editingId = null;
+    renderRecords();
+  }
+
+  async function saveEdit(id, role) {
+    const isStudent = (role||'').toLowerCase() === 'student';
+    const name  = document.getElementById('edit_name')?.value.trim();
+    const email = document.getElementById('edit_email')?.value.trim();
+    if (!name || !email) { showToast('⚠ Name and email are required.', 'err'); return; }
+
+    const updates = { name, email };
+    if (isStudent) {
+      updates.session    = document.getElementById('edit_session')?.value.trim() || null;
+      updates.department = document.getElementById('edit_dept')?.value || null;
+    } else {
+      updates.employee_id  = document.getElementById('edit_empid')?.value.trim() || null;
+      updates.faculty_type = document.getElementById('edit_ftype')?.value || null;
+    }
+
+    const btn = document.querySelector('.btn-save-row');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+    const { error } = await sb.from(TABLE).update(updates).eq('id', id);
+
+    if (error) { showToast('Error: ' + error.message, 'err'); if(btn){btn.disabled=false;btn.textContent='Save';} return; }
+
+    // Update local data
+    const idx = allUsers.findIndex(u => u.id === id);
+    if (idx !== -1) allUsers[idx] = { ...allUsers[idx], ...updates };
+    editingId = null;
+    updateRecSubtitle();
+    renderRecords();
+    showToast('✅ User updated successfully!', 'ok');
+  }
+
+  // ── Delete helpers ────────────────────────────────────────────────────────────
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('modalUserName').textContent = name;
+    document.getElementById('deleteModal').classList.add('show');
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+    pendingDeleteId = null;
+  }
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const btn = document.getElementById('modalConfirmBtn');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+
+    const { error } = await sb.from(TABLE).delete().eq('id', pendingDeleteId);
+
+    btn.disabled = false; btn.textContent = 'Delete Permanently';
+
+    if (error) { showToast('Error: ' + error.message, 'err'); closeDeleteModal(); return; }
+
+    allUsers = allUsers.filter(u => u.id !== pendingDeleteId);
+    closeDeleteModal();
+    updateRecSubtitle();
+    renderRecords();
+    showToast('🗑 User deleted permanently.', 'ok');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+
+  // ── Tab filter & search ───────────────────────────────────────────────────────
+  document.querySelectorAll('.rec-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.rec-tab').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      recRoleFilter = btn.getAttribute('data-role');
+      cancelEdit();
+      renderRecords();
+    });
+  });
+  document.addEventListener('input', e => { if (e.target.id === 'recSearch') { cancelEdit(); renderRecords(); } });
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast ' + (type||'ok'); t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── Save new user ─────────────────────────────────────────────────────────────
+  async function saveUser(type) {
+    if (type === 'student') {
+      const name = document.getElementById('s_name').value.trim();
+      const email = document.getElementById('s_email').value.trim();
+      const session = document.getElementById('s_session').value.trim();
+      const dept = document.getElementById('s_dept').value;
+      if (!name||!email||!session||!dept) { showToast('⚠ Please fill in all fields.','err'); return; }
+      const btn = document.getElementById('saveStudent');
+      btn.disabled=true; btn.textContent='Saving…';
+      const { error } = await sb.from(TABLE).insert({ name, email, session, department: dept, role: 'Student' });
+      btn.disabled=false; btn.textContent='Save Student →';
+      if (error) { showToast('Error: '+error.message,'err'); return; }
+      showToast('✅ Student registered successfully!','ok');
+      ['s_name','s_email','s_session'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('s_dept').value='';
+    } else {
+      const name = document.getElementById('f_name').value.trim();
+      const email = document.getElementById('f_email').value.trim();
+      const empid = document.getElementById('f_empid').value.trim();
+      const ftype = document.getElementById('f_type').value;
+      if (!name||!email||!empid||!ftype) { showToast('⚠ Please fill in all fields.','err'); return; }
+      const btn = document.getElementById('saveFaculty');
+      btn.disabled=true; btn.textContent='Saving…';
+      const { error } = await sb.from(TABLE).insert({ name, email, employee_id: empid, faculty_type: ftype, role: 'Faculty' });
+      btn.disabled=false; btn.textContent='Save Faculty →';
+      if (error) { showToast('Error: '+error.message,'err'); return; }
+      showToast('✅ Faculty member registered successfully!','ok');
+      ['f_name','f_email','f_empid'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('f_type').value='';
+    }
+    recordsLoaded = false;
+  }
+</script>
+</body>
+</html>

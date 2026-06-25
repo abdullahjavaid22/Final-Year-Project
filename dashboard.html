@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DigiSolutions | Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0f1e; --ink2: #111827; --sidebar-w: 240px;
+    --accent: #4f6ef7; --accent2: #7c3aed;
+    --gold: #f5a623; --success: #10b981; --warning: #f59e0b;
+    --danger: #ef4444; --info: #3b82f6;
+    --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+    --text: #e8eaf6; --muted: rgba(232,234,246,0.45);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ink); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: rgba(255,255,255,0.025); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 28px 0; flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; backdrop-filter: blur(20px); }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 22px 28px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(79,110,247,0.35); flex-shrink: 0; }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: -0.3px; }
+  .logo-dept { font-size: 10px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; }
+  .nav-section { margin-top: 24px; padding: 0 12px; }
+  .nav-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; padding: 0 10px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-size: 13.5px; transition: all 0.2s; margin-bottom: 2px; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: linear-gradient(135deg, rgba(79,110,247,0.2), rgba(124,58,237,0.12)); color: var(--text); border: 1px solid rgba(79,110,247,0.2); }
+  .nav-item .badge-nav { margin-left: auto; background: var(--accent); color: white; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+  .sidebar-bottom { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+  .user-chip:hover { background: var(--surface); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+  .user-info .u-name { font-size: 13px; font-weight: 500; }
+  .user-info .u-role { font-size: 11px; color: var(--muted); }
+
+  /* Main */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { padding: 20px 36px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(10,15,30,0.6); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 50; }
+  .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .topbar-left p { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .date-chip { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .icon-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+  .icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; border: 1.5px solid var(--ink); }
+
+  .content { padding: 36px; flex: 1; }
+
+  /* Stat cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+  .stat-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 22px 22px 20px; position: relative; overflow: hidden; transition: transform 0.25s, box-shadow 0.25s; animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .stat-card:nth-child(1){animation-delay:.05s} .stat-card:nth-child(2){animation-delay:.1s} .stat-card:nth-child(3){animation-delay:.15s} .stat-card:nth-child(4){animation-delay:.2s}
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:16px 16px 0 0; }
+  .stat-card.c-total::before   { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .stat-card.c-pending::before { background: var(--warning); }
+  .stat-card.c-progress::before{ background: var(--info); }
+  .stat-card.c-resolved::before{ background: var(--success); }
+  .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .c-total .stat-icon   { background: rgba(79,110,247,0.15);  color: var(--accent); }
+  .c-pending .stat-icon { background: rgba(245,158,11,0.15);  color: var(--warning); }
+  .c-progress .stat-icon{ background: rgba(59,130,246,0.15);  color: var(--info); }
+  .c-resolved .stat-icon{ background: rgba(16,185,129,0.15);  color: var(--success); }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.4px; margin-bottom: 6px; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; }
+  .stat-trend { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .trend-up { color: var(--success); } .trend-dn { color: var(--danger); }
+
+  /* Skeleton loader */
+  .skel { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Bottom grid */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+  .panel { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) both; animation-delay: 0.25s; }
+  .panel-header { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .panel-action { font-size: 12px; color: var(--accent); text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+  /* Complaint items */
+  .complaint-item { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer; text-decoration: none; color: inherit; }
+  .complaint-item:last-child { border-bottom: none; }
+  .complaint-item:hover { background: var(--surface); }
+  .c-ico { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .c-info { flex: 1; min-width: 0; }
+  .c-info .c-title { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-info .c-meta  { font-size: 11px; color: var(--muted); }
+
+  .badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; flex-shrink: 0; letter-spacing: 0.3px; white-space: nowrap; }
+  .badge-pending    { background: rgba(245,158,11,0.15);  color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+  .badge-progress   { background: rgba(59,130,246,0.15);  color: var(--info);    border: 1px solid rgba(59,130,246,0.2); }
+  .badge-successful { background: rgba(16,185,129,0.22);  color: #34d399;        border: 1px solid rgba(16,185,129,0.45); }
+  .badge-resolved   { background: rgba(16,185,129,0.15);  color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+
+  /* Priority badges */
+  .pri { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pri-urgent { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .pri-high   { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.25); }
+  .pri-medium { background: rgba(59,130,246,0.12); color: var(--info);    border: 1px solid rgba(59,130,246,0.2); }
+  .pri-low    { background: rgba(255,255,255,0.06);color: var(--muted);   border: 1px solid var(--border); }
+
+  /* Progress bar */
+  .prog-wrap { margin-bottom: 14px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .prog-bar  { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.22,1,.36,1); width: 0%; }
+
+  /* Activity */
+  .activity-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 22px; border-bottom: 1px solid var(--border); }
+  .activity-item:last-child { border-bottom: none; }
+  .act-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .act-text { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .act-text strong { color: var(--text); font-weight: 500; }
+  .act-time { font-size: 11px; color: rgba(232,234,246,0.3); margin-top: 3px; }
+
+  .empty-panel { text-align: center; padding: 32px 22px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="logo-name">DigiSolutions</div>
+      <div class="logo-dept" id="deptLogoSubtitle">Department Portal</div>
+    </div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-label">Main</div>
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="complaints.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Complaints
+      <span class="badge-nav" id="navBadge">—</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Departments
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </a>
+  </nav>
+  <nav class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">System</div>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      Settings
+    </a>
+    <a href="login.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">AD</div>
+      <div class="user-info">
+        <div class="u-name">Admin User</div>
+        <div class="u-role">Department Head</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Department Overview</h1>
+      <p id="deptWelcomeSubtitle">Welcome back — loading dashboard…</p>
+    </div>
+    <div class="topbar-right">
+      <div class="date-chip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="todayDate"></span>
+      </div>
+      <div class="icon-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card c-total">
+        <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="stat-label">Total Complaints</div>
+        <div class="stat-num" id="statTotal"><span class="skel" style="width:48px;height:36px;display:inline-block;"></span></div>
+        <div class="stat-trend trend-up" id="statTotalTrend">—</div>
+      </div>
+      <div class="stat-card c-pending">
+        <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-num" id="statPending"><span class="skel" style="width:36px;height:36px;display:inline-block;"></span></div>
+        <div class="stat-trend trend-dn">Needs attention</div>
+      </div>
+      <div class="stat-card c-progress">
+        <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-num" id="statProgress"><span class="skel" style="width:36px;height:36px;display:inline-block;"></span></div>
+        <div class="stat-trend trend-up">Active resolution</div>
+      </div>
+      <div class="stat-card c-resolved">
+        <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="stat-label">Resolved / Successful</div>
+        <div class="stat-num" id="statResolved"><span class="skel" style="width:36px;height:36px;display:inline-block;"></span></div>
+        <div class="stat-trend trend-up" id="statResolvedRate">—</div>
+      </div>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="bottom-grid">
+      <!-- Recent Complaints -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Recent Complaints</div>
+          <a href="complaints.html" class="panel-action">
+            View all
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+        <div id="recentList">
+          <!-- skeleton rows -->
+          <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center;">
+            <span class="skel" style="width:36px;height:36px;border-radius:10px;flex-shrink:0;"></span>
+            <div style="flex:1"><span class="skel" style="width:60%;height:13px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:40%;height:11px;display:block;"></span></div>
+            <span class="skel" style="width:70px;height:24px;border-radius:20px;"></span>
+          </div>
+          <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center;">
+            <span class="skel" style="width:36px;height:36px;border-radius:10px;flex-shrink:0;"></span>
+            <div style="flex:1"><span class="skel" style="width:55%;height:13px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:35%;height:11px;display:block;"></span></div>
+            <span class="skel" style="width:70px;height:24px;border-radius:20px;"></span>
+          </div>
+          <div style="padding:14px 22px;display:flex;gap:14px;align-items:center;">
+            <span class="skel" style="width:36px;height:36px;border-radius:10px;flex-shrink:0;"></span>
+            <div style="flex:1"><span class="skel" style="width:50%;height:13px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:30%;height:11px;display:block;"></span></div>
+            <span class="skel" style="width:70px;height:24px;border-radius:20px;"></span>
+          </div>
+        </div>
+
+        <!-- Resolution Rate -->
+        <div style="padding:20px 22px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:500;margin-bottom:16px;">Resolution Rate</div>
+          <div class="prog-wrap">
+            <div class="prog-label"><span>Resolved / Successful</span><span id="rateResolved">—</span></div>
+            <div class="prog-bar"><div class="prog-fill" id="barResolved" style="background:var(--success);"></div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-label"><span>In Progress</span><span id="rateProgress">—</span></div>
+            <div class="prog-bar"><div class="prog-fill" id="barProgress" style="background:var(--info);"></div></div>
+          </div>
+          <div class="prog-wrap" style="margin-bottom:0;">
+            <div class="prog-label"><span>Pending</span><span id="ratePending">—</span></div>
+            <div class="prog-bar"><div class="prog-fill" id="barPending" style="background:var(--warning);"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="panel" style="animation-delay:0.3s;">
+        <div class="panel-header">
+          <div class="panel-title">Recent Activity</div>
+        </div>
+        <div id="activityList">
+          <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;gap:12px;">
+            <span class="skel" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;"></span>
+            <div style="flex:1"><span class="skel" style="width:80%;height:12px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:40%;height:10px;display:block;"></span></div>
+          </div>
+          <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;gap:12px;">
+            <span class="skel" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;"></span>
+            <div style="flex:1"><span class="skel" style="width:70%;height:12px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:35%;height:10px;display:block;"></span></div>
+          </div>
+          <div style="padding:14px 22px;display:flex;gap:12px;">
+            <span class="skel" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;"></span>
+            <div style="flex:1"><span class="skel" style="width:75%;height:12px;display:block;margin-bottom:6px;"></span><span class="skel" style="width:30%;height:10px;display:block;"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  const SUPABASE_URL      = 'https://nxufdvaffsygzutcztzr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dWZkdmFmZnN5Z3p1dGN6dHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDYyMTQsImV4cCI6MjA5MzYyMjIxNH0.pEBD3mLOCyb5n86w1WkxC05iymYUzrGtbS5Q4qWW_MU';
+
+  const DEPT_TABLE_MAP = {
+    electricity:'electricity_complaints', exam:'exam_complaints', water:'water_complaints',
+    studentaffairs:'student_affairs_complaints', transport:'transport_complaints',
+    hostel:'hostel_complaints', finance:'finance_complaints', library:'library_complaints',
+    security:'security_complaints', academic:'academic_complaints',
+    building:'building_complaints', network:'network_complaints'
+  };
+
+  const client    = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const deptSlug  = localStorage.getItem('deptSlug');
+  const deptName  = localStorage.getItem('deptName') || 'Department';
+  const tableName = DEPT_TABLE_MAP[deptSlug] || deptSlug;
+
+  // UI labels
+  document.getElementById('deptLogoSubtitle').textContent  = deptName + ' Dept';
+  document.getElementById('deptWelcomeSubtitle').textContent = 'Welcome back — ' + deptName + ' Department Dashboard';
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+
+  function normalizeStatus(s) {
+    s = String(s || 'pending').toLowerCase().trim();
+    if (s === 'in_progress' || s === 'progress' || s === 'in progress') return 'progress';
+    if (s === 'successful' || s === 'success') return 'successful';
+    if (s === 'resolved') return 'resolved';
+    return 'pending';
+  }
+
+  function statusLabel(s) {
+    const n = normalizeStatus(s);
+    if (n === 'progress')   return 'In Progress';
+    if (n === 'successful') return 'Successful';
+    if (n === 'resolved')   return 'Resolved';
+    return 'Pending';
+  }
+
+  function statusBadgeClass(s) {
+    const n = normalizeStatus(s);
+    if (n === 'progress')   return 'badge-progress';
+    if (n === 'successful') return 'badge-successful';
+    if (n === 'resolved')   return 'badge-resolved';
+    return 'badge-pending';
+  }
+
+  function priorityIcon(p) {
+    const pl = (p || '').toLowerCase();
+    if (pl === 'urgent') return { bg: 'rgba(239,68,68,0.12)',  ico: '🔴' };
+    if (pl === 'high')   return { bg: 'rgba(245,158,11,0.12)', ico: '🟠' };
+    if (pl === 'medium') return { bg: 'rgba(59,130,246,0.12)', ico: '🔵' };
+    return                       { bg: 'rgba(255,255,255,0.06)', ico: '⚪' };
+  }
+
+  function priClass(p) {
+    const pl = (p || '').toLowerCase();
+    if (pl === 'urgent') return 'pri pri-urgent';
+    if (pl === 'high')   return 'pri pri-high';
+    if (pl === 'medium') return 'pri pri-medium';
+    return 'pri pri-low';
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '—';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1)   return 'Just now';
+    if (m < 60)  return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24)  return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 7)   return d + 'd ago';
+    return new Date(dateStr).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function loadDashboard() {
+    if (!tableName) return;
+
+    // Fetch complaints + complaint_status for this dept in parallel
+    const [compRes, csRes] = await Promise.all([
+      client.from(tableName).select('id, title, priority, date, created_at, status'),
+      client.from('complaint_status').select('complaint_id, status, updated_at').eq('complaint_table', tableName)
+    ]);
+
+    if (compRes.error) {
+      document.getElementById('statTotal').textContent = 'Err';
+      return;
+    }
+
+    const complaints = compRes.data || [];
+    const total      = complaints.length;
+
+    // Build cs lookup map
+    const csMap = {};
+    (csRes.data || []).forEach(function(row) { csMap[String(row.complaint_id)] = row; });
+
+    // Merge authoritative status
+    const merged = complaints.map(function(c) {
+      const cs = csMap[String(c.id)];
+      c._status = cs ? normalizeStatus(cs.status) : normalizeStatus(c.status);
+      c._updatedAt = cs ? cs.updated_at : (c.date || c.created_at);
+      return c;
+    });
+
+    // Count by status
+    let nPending = 0, nProgress = 0, nResolved = 0;
+    merged.forEach(function(c) {
+      if (c._status === 'pending')    nPending++;
+      else if (c._status === 'progress')   nProgress++;
+      else if (c._status === 'resolved' || c._status === 'successful') nResolved++;
+    });
+
+    // ── Stat cards ──
+    document.getElementById('statTotal').textContent    = total;
+    document.getElementById('statPending').textContent  = nPending;
+    document.getElementById('statProgress').textContent = nProgress;
+    document.getElementById('statResolved').textContent = nResolved;
+    document.getElementById('navBadge').textContent     = total;
+
+    const resolvedPct = total ? Math.round((nResolved  / total) * 100) : 0;
+    const progressPct = total ? Math.round((nProgress  / total) * 100) : 0;
+    const pendingPct  = total ? Math.round((nPending   / total) * 100) : 0;
+
+    document.getElementById('statResolvedRate').textContent    = resolvedPct + '% rate';
+    document.getElementById('statTotalTrend').textContent      = total + ' total complaints';
+
+    // ── Progress bars (animate after a tick) ──
+    setTimeout(function() {
+      document.getElementById('barResolved').style.width = resolvedPct + '%';
+      document.getElementById('barProgress').style.width = progressPct + '%';
+      document.getElementById('barPending').style.width  = pendingPct  + '%';
+    }, 100);
+    document.getElementById('rateResolved').textContent = resolvedPct + '%';
+    document.getElementById('rateProgress').textContent = progressPct + '%';
+    document.getElementById('ratePending').textContent  = pendingPct  + '%';
+
+    // ── Recent complaints: pending first sorted by priority, then others ──
+    const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const statusOrder   = { pending: 0, progress: 1, successful: 2, resolved: 3 };
+
+    const sorted = [...merged].sort(function(a, b) {
+      const sa = statusOrder[a._status] ?? 99;
+      const sb = statusOrder[b._status] ?? 99;
+      if (sa !== sb) return sa - sb;
+      const pa = priorityOrder[(a.priority || '').toLowerCase()] ?? 99;
+      const pb = priorityOrder[(b.priority || '').toLowerCase()] ?? 99;
+      return pa - pb;
+    });
+
+    const recent = sorted.slice(0, 5);
+
+    if (!recent.length) {
+      document.getElementById('recentList').innerHTML = '<div class="empty-panel">No complaints yet.</div>';
+    } else {
+      document.getElementById('recentList').innerHTML = recent.map(function(c) {
+        const pi = priorityIcon(c.priority);
+        return (
+          '<a href="complaints.html" class="complaint-item">' +
+            '<div class="c-ico" style="background:' + pi.bg + ';">' + pi.ico + '</div>' +
+            '<div class="c-info">' +
+              '<div class="c-title">' + esc(c.title || 'Untitled') + '</div>' +
+              '<div class="c-meta">' +
+                esc(deptName) + ' · #' + esc(c.id) + ' · ' + timeAgo(c.date || c.created_at) +
+                (c.priority ? ' · <span class="' + priClass(c.priority) + '">' + esc(c.priority) + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<span class="badge ' + statusBadgeClass(c._status) + '">' + statusLabel(c._status) + '</span>' +
+          '</a>'
+        );
+      }).join('');
+    }
+
+    // ── Activity log: last 6 status updates from complaint_status ──
+    const { data: actData } = await client
+      .from('complaint_status')
+      .select('complaint_id, status, updated_at')
+      .eq('complaint_table', tableName)
+      .order('updated_at', { ascending: false })
+      .limit(6);
+
+    if (!actData || !actData.length) {
+      document.getElementById('activityList').innerHTML = '<div class="empty-panel">No activity yet.</div>';
+    } else {
+      const dotColors = { pending: 'var(--warning)', progress: 'var(--info)', successful: '#34d399', resolved: 'var(--success)' };
+      document.getElementById('activityList').innerHTML = actData.map(function(row) {
+        const n   = normalizeStatus(row.status);
+        const dot = dotColors[n] || 'var(--muted)';
+        const lbl = statusLabel(row.status);
+        return (
+          '<div class="activity-item">' +
+            '<div class="act-dot" style="background:' + dot + ';"></div>' +
+            '<div>' +
+              '<div class="act-text">Complaint <strong>#' + esc(row.complaint_id) + '</strong> marked as <strong>' + lbl + '</strong></div>' +
+              '<div class="act-time">' + timeAgo(row.updated_at) + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+  }
+
+  loadDashboard();
+})();
+</script>
+</body>
+</html>
